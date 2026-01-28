@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: movies_postgres
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./postgres/database_dump.sql:/docker-entrypoint-initdb.d/database_dump.sql
+      - movies-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [
+              "CMD-SHELL",
+              "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  movies-postgres-data:
