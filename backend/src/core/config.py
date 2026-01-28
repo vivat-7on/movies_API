@@ -3,7 +3,8 @@ from logging import config as logging_config
 
 from .logger import LOGGING
 
-logging_config.dictConfig(LOGGING)
+def setup_logging() -> None:
+    logging_config.dictConfig(LOGGING)
 
 PROJECT_NAME = os.getenv('PROJECT_NAME', 'movies')
 
