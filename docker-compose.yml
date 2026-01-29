@@ -19,5 +19,48 @@ services:
       timeout: 5s
       retries: 5
 
+  es:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.2
+    container_name: movies_es
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "9200:9200"
+    healthcheck:
+      test: curl -s http://es:9200 >/dev/null || exit 1
+      interval: 30s
+      timeout: 10s
+      retries: 50
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    volumes:
+      - movies-es-data:/usr/share/elasticsearch/data
+
+  etl:
+    build: ./etl
+    container_name: movies_etl
+    restart: always
+    env_file:
+      - .env
+    environment:
+      ES_HOST: es
+      ES_PORT: 9200
+      ES_INDEX: ${ES_INDEX}
+      POLL_INTERVAL_SECONDS: ${POLL_INTERVAL_SECONDS}
+      STORAGE_FILE_NAME: ${STORAGE_FILE_NAME}
+      LOG_LEVEL: ${LOG_LEVEL}
+    depends_on:
+      db:
+        condition: service_healthy
+      es:
+        condition: service_healthy
+    volumes:
+      - movies-etl-state:/data
+
 volumes:
   movies-postgres-data:
+  movies-es-data:
+  movies-etl-state:
