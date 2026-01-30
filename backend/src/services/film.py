@@ -23,3 +23,10 @@ class FilmService:
             await self.cache_repo.put(film=film)
 
         return film
+
+    async def get_list(
+        self,
+        page: int,
+        size: int,
+    ) -> tuple[int, list[Film]]:
+        return await self.elastic_repo.get_list(page=page, size=size)
