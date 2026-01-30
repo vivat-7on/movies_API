@@ -8,3 +8,4 @@ class EsSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+       
