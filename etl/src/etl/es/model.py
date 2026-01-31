@@ -2,6 +2,7 @@ import uuid
 
 from pydantic import BaseModel
 
+
 class EsPerson(BaseModel):
     id: uuid.UUID
     name: str
@@ -19,3 +20,8 @@ class FilmEsDocument(BaseModel):
     directors: list[EsPerson]
     actors: list[EsPerson]
     writers: list[EsPerson]
+
+
+class EsGenre(BaseModel):
+    id: uuid.UUID
+    name: str
