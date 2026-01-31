@@ -30,3 +30,27 @@ class FilmListResponse(BaseModel):
     page: int
     size: int
     results: list[FilmShort]
+
+
+class GenreResponse(BaseModel):
+    id: str
+    name: str
+
+
+class PersonResponse(BaseModel):
+    id: str
+    name: str
+
+
+class GenreListResponse(BaseModel):
+    count: int
+    page: int
+    size: int
+    results: list[GenreResponse]
+
+
+class PersonListResponse(BaseModel):
+    count: int
+    page: int
+    size: int
+    results: list[PersonResponse]

@@ -5,7 +5,7 @@ from redis.asyncio import Redis
 from models.film import Film
 
 FILM_CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
-LIST_CACHE_EXPIRE_IN_SECONDS = 60  # 1 минута
+LIST_FILM_CACHE_EXPIRE_IN_SECONDS = 60  # 1 минута
 
 
 class FilmCacheRepository:
@@ -47,5 +47,5 @@ class FilmCacheRepository:
         await self.redis.set(
             key,
             json.dumps(payload),
-            LIST_CACHE_EXPIRE_IN_SECONDS,
+            LIST_FILM_CACHE_EXPIRE_IN_SECONDS,
             )

@@ -1,38 +1,42 @@
 from elasticsearch import AsyncElasticsearch, NotFoundError
 
-from models.film import Film
+from models.film import Genre
 
 
-class FilmElasticRepository:
-    def __init__(self, elastic: AsyncElasticsearch):
+class GenreElasticRepository:
+    def __init__(self, elastic: AsyncElasticsearch) -> None:
         self.elastic = elastic
 
-    async def get_by_id(self, film_id: str) -> Film | None:
+    async def get_by_id(self, genre_id: str) -> Genre | None:
         try:
-            doc = await self.elastic.get(index='movies', id=film_id)
+            doc = await self.elastic.get(index="genres", id=genre_id)
         except NotFoundError:
             return None
-        return Film(**doc['_source'])
+        return Genre(**doc["_source"])
 
     async def get_list(
         self,
         sort_field: str | None,
         sort_order: str | None,
-        genre: str | None,
+        search: str | None,
         page: int,
         size: int,
-        ) -> tuple[int, list[Film]]:
+        ) -> tuple[int, list[Genre]]:
         offset = (page - 1) * size
 
-        query: dict = {"bool": {"filter": []}}
-        if genre:
-            query["bool"]["filter"].append(
-                {"term": {"genres": genre}},
-                )
-        if not query["bool"]["filter"]:
+        if search:
+            query = {
+                "match": {
+                    "name": {
+                        "query": search,
+                        "operator": "and",
+                        }
+                    }
+                }
+        else:
             query = {"match_all": {}}
 
-        body: dict = {
+        body = {
             "from": offset,
             "size": size,
             "query": query,
@@ -41,18 +45,20 @@ class FilmElasticRepository:
                     sort_field: {
                         "order": sort_order,
                         "missing": "_last",
-                        },
+                        }
                     }
                 ],
             }
 
         response = await self.elastic.search(
-            index="movies",
+            index="genres",
             body=body,
             )
+
         total = response["hits"]["total"]["value"]
-        films = [
-            Film(**hit["_source"])
+        genres = [
+            Genre(**hit["_source"])
             for hit in response["hits"]["hits"]
             ]
-        return total, films
+
+        return total, genres

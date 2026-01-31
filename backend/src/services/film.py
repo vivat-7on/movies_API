@@ -1,7 +1,7 @@
 from attrs import frozen
 from models.film import Film
-from repositories.film_cache import FilmCacheRepository
-from repositories.film_elastic import FilmElasticRepository
+from repositories.cache.film_cache import FilmCacheRepository
+from repositories.elastic.film_elastic import FilmElasticRepository
 
 SORT_FIELDS = {
     "imdb_rating": "imdb_rating",
