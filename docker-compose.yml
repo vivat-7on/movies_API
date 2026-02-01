@@ -66,8 +66,6 @@ services:
     restart: always
     env_file:
       - .env
-    ports:
-      - "6379:6379"
     healthcheck:
       test: [
         "CMD-SHELL",
@@ -77,6 +75,20 @@ services:
       timeout: 3s
       retries: 5
     command: ["redis-server"]
+
+  api:
+    build: ./backend
+    container_name: movies_api
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      es:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
 
 volumes:
   movies-postgres-data:
