@@ -40,7 +40,9 @@ services:
       - movies-es-data:/usr/share/elasticsearch/data
 
   etl:
-    build: ./etl
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
     container_name: movies_etl
     restart: always
     env_file:
@@ -77,18 +79,34 @@ services:
     command: ["redis-server"]
 
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: movies_api
     restart: always
     env_file:
       - .env
-    ports:
-      - "8000:8000"
     depends_on:
       es:
         condition: service_healthy
       cache:
         condition: service_healthy
+
+  gateway:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: movies_gateway
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    healthcheck:
+      test: [ "CMD", "wget", "-qO-", "http://localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   movies-postgres-data:
