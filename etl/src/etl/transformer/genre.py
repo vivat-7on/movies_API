@@ -4,6 +4,6 @@ from etl.es.model import EsGenre
 
 def transform_genre(genre: GenreDTO) -> EsGenre:
     return EsGenre(
-        id=genre.id,
+        id=genre.uuid,
         name=genre.name,
         )
