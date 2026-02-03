@@ -6,10 +6,15 @@ class Persons(BaseModel):
     name: str
 
 
+class Genre(BaseModel):
+    id: str
+    name: str
+
+
 class Film(BaseModel):
     id: str
     imdb_rating: float | None
-    genres: list[str]
+    genres: list[Genre]
 
     title: str
     description: str | None
@@ -21,11 +26,6 @@ class Film(BaseModel):
     directors: list[Persons]
     actors: list[Persons]
     writers: list[Persons]
-
-
-class Genre(BaseModel):
-    id: str
-    name: str
 
 
 class Person(BaseModel):

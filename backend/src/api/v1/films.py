@@ -5,7 +5,13 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.params import Depends
 
 from api.v1.container import create_film_service
-from models.schemas import FilmResponse, FilmListResponse, FilmShort
+from models.schemas import (
+    FilmShort,
+    FilmResponse,
+    GenreResponse,
+    PersonsResponse,
+    FilmListResponse,
+    )
 from services.film import FilmService
 
 router = APIRouter()
@@ -48,7 +54,25 @@ async def film_details(
             status_code=HTTPStatus.NOT_FOUND,
             detail=f"Film with id={film_id} not found",
             )
-    return FilmResponse(**film.model_dump())
+    return FilmResponse(
+        uuid=film.id,
+        imdb_rating=film.imdb_rating,
+        genres=[GenreResponse(uuid=g.id, name=g.name) for g in film.genres],
+        title=film.title,
+        description=film.description,
+        directors=[
+            PersonsResponse(uuid=d.id, name=d.name)
+            for d in film.directors
+            ],
+        actors=[
+            PersonsResponse(uuid=a.id, name=a.name)
+            for a in film.directors
+            ],
+        writers=[
+            PersonsResponse(uuid=w.id, name=w.name)
+            for w in film.directors
+            ],
+        )
 
 
 @router.get('/', response_model=FilmListResponse)

@@ -4,6 +4,6 @@ from etl.es.model import EsPerson
 
 def transform_person(person: PersonDTO) -> EsPerson:
     return EsPerson(
-        id=person.id,
+        id=person.uuid,
         name=person.full_name,
         )

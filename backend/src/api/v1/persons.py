@@ -81,7 +81,10 @@ async def get_person(
             status_code=404,
             detail=f"Person with id {person_id} not found",
             )
-    return PersonResponse(**person.model_dump())
+    return PersonResponse(
+        uuid=person.id,
+        name=person.name,
+        )
 
 
 @router.get("/", response_model=PersonListResponse)
