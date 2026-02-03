@@ -24,12 +24,26 @@ class FilmElasticRepository:
         ) -> tuple[int, list[Film]]:
         offset = (page - 1) * size
 
-        query: dict = {"bool": {"filter": []}}
+        filters = []
+
         if genre:
-            query["bool"]["filter"].append(
-                {"term": {"genres": genre}},
+            filters.append(
+                {
+                    "nested": {
+                        "path": "genres",
+                        "query": {
+                            "term": {
+                                "genres.id": genre,
+                                },
+                            },
+                        },
+                    },
                 )
-        if not query["bool"]["filter"]:
+
+        query: dict
+        if filters:
+            query = {"bool": {"filter": filters}}
+        else:
             query = {"match_all": {}}
 
         body: dict = {
@@ -42,7 +56,7 @@ class FilmElasticRepository:
                         "order": sort_order,
                         "missing": "_last",
                         },
-                    }
+                    },
                 ],
             }
 

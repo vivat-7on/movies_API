@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.params import Depends
@@ -12,7 +13,7 @@ router = APIRouter()
 
 @router.get('/{film_id}', response_model=FilmResponse)
 async def film_details(
-    film_id: str,
+    film_id: UUID,
     service: FilmService = Depends(create_film_service),
     ) -> FilmResponse:
     film = await service.get_by_id(film_id=film_id)
@@ -29,7 +30,7 @@ async def film_list(
     page_number: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     sort: str | None = Query(None),
-    genre: str | None = Query(None),
+    genre: UUID | None = Query(None),
     service: FilmService = Depends(create_film_service),
     ) -> FilmListResponse:
     total, films = await service.get_list(

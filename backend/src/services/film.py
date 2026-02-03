@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from attrs import frozen
 from models.film import Film
 from repositories.cache.film_cache import FilmCacheRepository
@@ -14,12 +16,13 @@ class FilmService:
     elastic_repo: FilmElasticRepository
     cache_repo: FilmCacheRepository
 
-    async def get_by_id(self, film_id: str) -> Film | None:
+    async def get_by_id(self, film_id: UUID) -> Film | None:
         # Пытаемся получить данные из кеша, потому что оно работает быстрее
-        film = await self.cache_repo.get(film_id=film_id)
+        film_id_str = str(film_id)
+        film = await self.cache_repo.get(film_id=film_id_str)
         if not film:
             # Если фильма нет в кеше, то ищем его в Elasticsearch
-            film = await self.elastic_repo.get_by_id(film_id=film_id)
+            film = await self.elastic_repo.get_by_id(film_id=film_id_str)
             if not film:
                 # Если он отсутствует в Elasticsearch,
                 # значит, фильма вообще нет в базе
@@ -32,14 +35,15 @@ class FilmService:
     async def get_list(
         self,
         sort: str | None,
-        genre: str | None,
+        genre: UUID | None,
         page: int,
         size: int,
         ) -> tuple[int, list[Film]]:
 
+        genre_str = str(genre)
         cache_key = self._build_cache_key(
             sort=sort,
-            genre=genre,
+            genre=genre_str,
             page=page,
             size=size,
             )
@@ -58,7 +62,7 @@ class FilmService:
         result = await self.elastic_repo.get_list(
             sort_field=sort_field,
             sort_order=sort_order,
-            genre=genre,
+            genre=genre_str,
             page=page,
             size=size,
             )
