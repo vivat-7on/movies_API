@@ -113,10 +113,10 @@ def process_movies(
 def process_genres(
     loader: ElasticsearchLoader,
     conn: PgConnection,
-    genres_ts: datetime.datetime | None = None,
+    genre_ts: datetime.datetime | None = None,
     ) -> datetime.datetime | None:
     extractor = PostgresExtractor(connection=conn)
-    genres, genre_ts = extractor.fetch_changed_genres(genres_ts=genres_ts)
+    genres, genre_ts = extractor.fetch_changed_genres(genres_ts=genre_ts)
     if not genres:
         return genre_ts
 
@@ -133,10 +133,10 @@ def process_genres(
 def process_persons(
     loader: ElasticsearchLoader,
     conn: PgConnection,
-    persons_ts: datetime.datetime | None = None,
+    person_ts: datetime.datetime | None = None,
     ) -> datetime.datetime | None:
     extractor = PostgresExtractor(connection=conn)
-    persons, person_ts = extractor.fetch_changed_persons(persons_ts=persons_ts)
+    persons, person_ts = extractor.fetch_changed_persons(persons_ts=person_ts)
     if not persons:
         return person_ts
 
@@ -159,8 +159,6 @@ def run_once(
     psycopg2.extras.register_uuid(conn_or_curs=conn)
     try:
         # получаем состояние из хранилища
-        genres_ts = state.get("genres_ts")
-        persons_ts = state.get("persons_ts")
 
         genre_ts = state.get("genre_ts")
         person_ts = state.get("person_ts")
@@ -169,15 +167,15 @@ def run_once(
         genre_film_work_ts = state.get("genre_film_work_ts")
         person_film_work_ts = state.get("person_film_work_ts")
 
-        genres_ts = process_genres(
+        genre_ts = process_genres(
             loader=loader,
             conn=conn,
-            genres_ts=genres_ts,
+            genre_ts=genre_ts,
             )
-        persons_ts = process_persons(
+        person_ts = process_persons(
             loader=loader,
             conn=conn,
-            persons_ts=persons_ts,
+            person_ts=person_ts,
             )
         movies_state = process_movies(
             loader=loader,
@@ -189,8 +187,6 @@ def run_once(
             person_film_work_ts=person_film_work_ts,
             )
         # сохраняем состояние
-        state.set("genres_ts", genres_ts)
-        state.set("persons_ts", persons_ts)
 
         state.set("genre_ts", genre_ts)
         state.set("person_ts", person_ts)
