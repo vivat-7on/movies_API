@@ -2,14 +2,19 @@ from pydantic import BaseModel
 
 
 class PersonsResponse(BaseModel):
-    id: str
+    uuid: str
+    name: str
+
+
+class GenreResponse(BaseModel):
+    uuid: str
     name: str
 
 
 class FilmResponse(BaseModel):
-    id: str
+    uuid: str
     imdb_rating: float | None
-    genres: list[str]
+    genres: list[GenreResponse]
 
     title: str
     description: str | None
@@ -27,14 +32,9 @@ class FilmShort(BaseModel):
 
 class FilmListResponse(BaseModel):
     count: int
-    page: int
-    size: int
+    page_number: int
+    page_size: int
     results: list[FilmShort]
-
-
-class GenreResponse(BaseModel):
-    uuid: str
-    name: str
 
 
 class PersonResponse(BaseModel):
@@ -44,13 +44,13 @@ class PersonResponse(BaseModel):
 
 class GenreListResponse(BaseModel):
     count: int
-    page: int
-    size: int
+    page_number: int
+    page_size: int
     results: list[GenreResponse]
 
 
 class PersonListResponse(BaseModel):
     count: int
-    page: int
-    size: int
+    page_number: int
+    page_size: int
     results: list[PersonResponse]

@@ -18,7 +18,10 @@ async def get_genre(
             status_code=404,
             detail=f"Genre with id={genre_id} not found",
             )
-    return GenreResponse(**genre.model_dump())
+    return GenreResponse(
+        uuid=genre.id,
+        name=genre.name,
+        )
 
 
 @router.get("/", response_model=GenreListResponse)
@@ -37,8 +40,8 @@ async def genres_list(
         )
     return GenreListResponse(
         count=total,
-        page=page_number,
-        size=page_size,
+        page_number=page_number,
+        page_size=page_size,
         results=[
             GenreResponse(
                 uuid=genre.id,

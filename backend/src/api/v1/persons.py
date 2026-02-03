@@ -27,8 +27,8 @@ async def persons_search(
         )
     return PersonListResponse(
         count=total,
-        page=page_number,
-        size=page_size,
+        page_number=page_number,
+        page_size=page_size,
         results=[
             PersonResponse(
                 uuid=person.id,
@@ -58,8 +58,8 @@ async def persons_film(
         )
     return FilmListResponse(
         count=total,
-        page=page_number,
-        size=page_size,
+        page_number=page_number,
+        page_size=page_size,
         results=[
             FilmShort(
                 uuid=film.id,
@@ -81,7 +81,10 @@ async def get_person(
             status_code=404,
             detail=f"Person with id {person_id} not found",
             )
-    return PersonResponse(**person.model_dump())
+    return PersonResponse(
+        uuid=person.id,
+        name=person.name,
+        )
 
 
 @router.get("/", response_model=PersonListResponse)
@@ -100,8 +103,8 @@ async def persons_list(
         )
     return PersonListResponse(
         count=total,
-        page=page_number,
-        size=page_size,
+        page_number=page_number,
+        page_size=page_size,
         results=[
             PersonResponse(
                 uuid=person.id,
