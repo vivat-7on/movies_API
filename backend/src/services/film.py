@@ -70,6 +70,18 @@ class FilmService:
 
         return result
 
+    async def search(
+        self,
+        query: str,
+        page: int,
+        size: int,
+        ) -> tuple[int, list[Film]]:
+        return await self.elastic_repo.search(
+            query=query,
+            page=page,
+            size=size,
+            )
+
     def _build_cache_key(
         self,
         sort: str,

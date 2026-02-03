@@ -11,6 +11,32 @@ from services.film import FilmService
 router = APIRouter()
 
 
+@router.get('/search', response_model=FilmListResponse)
+async def films_search(
+    query: str = Query(..., min_length=1),
+    page_size: int = Query(50, ge=1, le=100),
+    page_number: int = Query(1, ge=1, le=100),
+    service: FilmService = Depends(create_film_service),
+    ) -> FilmListResponse:
+    total, films = await service.search(
+        query=query,
+        page=page_number,
+        size=page_size,
+        )
+    return FilmListResponse(
+        count=total,
+        page=page_number,
+        size=page_size,
+        results=[
+            FilmShort(
+                uuid=film.id,
+                title=film.title,
+                imdb_rating=film.imdb_rating,
+                ) for film in films
+            ],
+        )
+
+
 @router.get('/{film_id}', response_model=FilmResponse)
 async def film_details(
     film_id: UUID,
@@ -46,8 +72,8 @@ async def film_list(
         results=[
             FilmShort(
                 uuid=film.id,
-                imdb_rating=film.imdb_rating,
                 title=film.title,
+                imdb_rating=film.imdb_rating,
                 ) for film in films
             ],
         )
