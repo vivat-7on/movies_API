@@ -30,8 +30,8 @@ class PersonElasticRepository:
                     "name": {
                         "query": search,
                         "operator": "and",
-                        }
-                    }
+                        },
+                    },
                 }
         else:
             query = {"match_all": {}}
@@ -45,8 +45,8 @@ class PersonElasticRepository:
                     sort_field: {
                         "order": sort_order,
                         "missing": "_last",
-                        }
-                    }
+                        },
+                    },
                 ],
             }
         response = await self.elastic.search(
@@ -60,4 +60,35 @@ class PersonElasticRepository:
             for hit in response["hits"]["hits"]
             ]
 
+        return total, persons
+
+    async def search(
+        self,
+        query: str,
+        page_number: int,
+        page_size: int,
+        ) -> tuple[int, list[Person]]:
+        offset = (page_number - 1) * page_size
+        body = {
+            "from": offset,
+            "size": page_size,
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": ["name"],
+                    "fuzziness": "AUTO",
+                    },
+                },
+            }
+
+        response = await self.elastic.search(
+            index="persons",
+            body=body,
+            )
+
+        total = response["hits"]["total"]["value"]
+        persons = [
+            Person(**hit["_source"])
+            for hit in response["hits"]["hits"]
+            ]
         return total, persons

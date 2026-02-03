@@ -1,8 +1,11 @@
+from uuid import UUID
+
 from attrs import frozen
 
-from models.film import Person
+from models.film import Person, Film
 from repositories.cache.person_cache import PersonCacheRepository
 from repositories.elastic.person_elastic import PersonElasticRepository
+from services.film import FilmService
 
 SORT_FIELDS = {
     "name": "name.raw",
@@ -13,11 +16,13 @@ SORT_FIELDS = {
 class PersonService:
     elastic_repo: PersonElasticRepository
     cache_repo: PersonCacheRepository
+    film_service: FilmService
 
-    async def get_by_id(self, person_id: str) -> Person | None:
-        person = await self.cache_repo.get(person_id=person_id)
+    async def get_by_id(self, person_id: UUID) -> Person | None:
+        person_id_str = str(person_id)
+        person = await self.cache_repo.get(person_id=person_id_str)
         if not person:
-            person = await self.elastic_repo.get_by_id(person_id=person_id)
+            person = await self.elastic_repo.get_by_id(person_id=person_id_str)
             if not person:
                 return None
             await self.cache_repo.put(person=person)
@@ -59,6 +64,31 @@ class PersonService:
         await self.cache_repo.put_list(cache_key, result)
 
         return result
+
+
+    async def get_films(
+        self,
+        person_id: UUID,
+        page: int,
+        size: int,
+        ) -> tuple[int, list[Film]]:
+        return await self.film_service.get_by_person(
+            person_id=person_id,
+            page=page,
+            size=size,
+            )
+
+    async def search(
+        self,
+        query: str,
+        page_number: int,
+        page_size: int,
+        ) -> tuple[int, list[Person]]:
+        return await self.elastic_repo.search(
+            query=query,
+            page_number=page_number,
+            page_size=page_size,
+            )
 
     def _build_cache_key(
         self,

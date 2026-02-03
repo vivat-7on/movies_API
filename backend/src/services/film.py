@@ -82,6 +82,19 @@ class FilmService:
             size=size,
             )
 
+    async def get_by_person(
+        self,
+        person_id: UUID,
+        page: int,
+        size: int,
+        ) -> tuple[int, list[Film]]:
+        person_id_str = str(person_id)
+        return await self.elastic_repo.get_by_person_id(
+            person_id=person_id_str,
+            page=page,
+            size=size,
+            )
+
     def _build_cache_key(
         self,
         sort: str,

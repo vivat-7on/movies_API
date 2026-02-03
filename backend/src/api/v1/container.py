@@ -85,8 +85,10 @@ def create_person_service(
         create_person_elastic_repository,
         ),
     cache_repo: PersonCacheRepository = Depends(create_person_cache_repository),
+    film_service: FilmService = Depends(create_film_service),
     ) -> PersonService:
     return PersonService(
         elastic_repo=elastic_repo,
         cache_repo=cache_repo,
+        film_service=film_service,
         )
