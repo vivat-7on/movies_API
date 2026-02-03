@@ -42,7 +42,7 @@ async def persons_list(
         size=size,
         results=[
             PersonResponse(
-                id=person.id,
+                uuid=person.id,
                 name=person.name,
                 ) for person in persons
             ],

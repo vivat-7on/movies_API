@@ -20,9 +20,9 @@ class FilmResponse(BaseModel):
 
 
 class FilmShort(BaseModel):
-    id: str
-    imdb_rating: float
+    uuid: str
     title: str
+    imdb_rating: float
 
 
 class FilmListResponse(BaseModel):
@@ -33,12 +33,12 @@ class FilmListResponse(BaseModel):
 
 
 class GenreResponse(BaseModel):
-    id: str
+    uuid: str
     name: str
 
 
 class PersonResponse(BaseModel):
-    id: str
+    uuid: str
     name: str
 
 

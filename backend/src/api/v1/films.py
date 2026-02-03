@@ -26,8 +26,8 @@ async def film_details(
 
 @router.get('/', response_model=FilmListResponse)
 async def film_list(
-    page: int = Query(1, ge=1),
-    size: int = Query(50, ge=1, le=100),
+    page_number: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
     sort: str | None = Query(None),
     genre: str | None = Query(None),
     service: FilmService = Depends(create_film_service),
@@ -35,16 +35,16 @@ async def film_list(
     total, films = await service.get_list(
         sort=sort,
         genre=genre,
-        page=page,
-        size=size,
+        page=page_number,
+        size=page_size,
         )
     return FilmListResponse(
         count=total,
-        page=page,
-        size=size,
+        page=page_number,
+        size=page_size,
         results=[
             FilmShort(
-                id=film.id,
+                uuid=film.id,
                 imdb_rating=film.imdb_rating,
                 title=film.title,
                 ) for film in films

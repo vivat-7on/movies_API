@@ -23,25 +23,25 @@ async def get_genre(
 
 @router.get("/", response_model=GenreListResponse)
 async def genres_list(
-    page: int = Query(1, ge=1),
-    size: int = Query(50, ge=1, le=100),
+    page_number: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=100),
     sort: str | None = Query(None),
     search: str | None = Query(None),
     service: GenreService = Depends(create_genre_service),
     ) -> GenreListResponse:
     total, genres = await service.get_list(
-        page=page,
-        size=size,
+        page=page_number,
+        size=page_size,
         sort=sort,
         search=search,
         )
     return GenreListResponse(
         count=total,
-        page=page,
-        size=size,
+        page=page_number,
+        size=page_size,
         results=[
             GenreResponse(
-                id=genre.id,
+                uuid=genre.id,
                 name=genre.name,
                 ) for genre in genres
             ],

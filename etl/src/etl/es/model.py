@@ -8,10 +8,15 @@ class EsPerson(BaseModel):
     name: str
 
 
+class EsGenre(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
 class FilmEsDocument(BaseModel):
     id: uuid.UUID
     imdb_rating: float | None
-    genres: list[str]
+    genres: list[EsGenre]
     title: str
     description: str | None
     directors_names: list[str]
@@ -20,8 +25,3 @@ class FilmEsDocument(BaseModel):
     directors: list[EsPerson]
     actors: list[EsPerson]
     writers: list[EsPerson]
-
-
-class EsGenre(BaseModel):
-    id: uuid.UUID
-    name: str
