@@ -17,7 +17,7 @@ class FilmService:
     cache_repo: FilmCacheRepository
 
     async def get_by_id(self, film_id: UUID) -> Film | None:
-        # Пытаемся получить данные из кеша, потому что оно работает быстрее
+        # Пытаемся получить данные из кеша
         film_id_str = str(film_id)
         film = await self.cache_repo.get(film_id=film_id_str)
         if not film:
@@ -40,15 +40,14 @@ class FilmService:
         size: int,
         ) -> tuple[int, list[Film]]:
 
-        genre_str = str(genre)
-        cache_key = self._build_cache_key(
+        cache_key = self._build_list_cache_key(
             sort=sort,
-            genre=genre_str,
+            genre=str(genre) if genre else None,
             page=page,
             size=size,
             )
         cached = await self.cache_repo.get_list(cache_key)
-        if cached:
+        if cached is not None:
             return cached
 
         sort_field = "imdb_rating"
@@ -62,7 +61,7 @@ class FilmService:
         result = await self.elastic_repo.get_list(
             sort_field=sort_field,
             sort_order=sort_order,
-            genre=genre_str,
+            genre=str(genre) if genre else None,
             page=page,
             size=size,
             )
@@ -76,11 +75,31 @@ class FilmService:
         page: int,
         size: int,
         ) -> tuple[int, list[Film]]:
-        return await self.elastic_repo.search(
+
+        cache_key = self._build_searsh_cache_key(
             query=query,
             page=page,
             size=size,
             )
+
+        cached = await self.cache_repo.get_list(cache_key)
+
+        if cached is not None:
+            return cached
+
+        result = await self.elastic_repo.search(
+            query=query,
+            page=page,
+            size=size,
+            )
+
+        await self.cache_repo.put_list(
+            key=cache_key,
+            value=result,
+            ttl=60,
+            )
+
+        return result
 
     async def get_by_person(
         self,
@@ -89,13 +108,29 @@ class FilmService:
         size: int,
         ) -> tuple[int, list[Film]]:
         person_id_str = str(person_id)
-        return await self.elastic_repo.get_by_person_id(
+
+        cache_key = self._build_person_cache_key(
             person_id=person_id_str,
             page=page,
             size=size,
             )
 
-    def _build_cache_key(
+        cached = await self.cache_repo.get_list(cache_key)
+
+        if cached is not None:
+            return cached
+
+        result = await self.elastic_repo.get_by_person_id(
+            person_id=person_id_str,
+            page=page,
+            size=size,
+            )
+
+        await self.cache_repo.put_list(cache_key, result)
+
+        return result
+
+    def _build_list_cache_key(
         self,
         sort: str,
         genre: str,
@@ -106,6 +141,33 @@ class FilmService:
             "films:list:"
             f"sort={sort or 'default'}:"
             f"genre={genre or 'all'}:"
+            f"page={page}:"
+            f"size={size}"
+        )
+
+    def _build_searsh_cache_key(
+        self,
+        query: str,
+        page: int,
+        size: int,
+        ) -> str:
+        query = " ".join(query.strip().lower().split())
+        return (
+            "films:search:"
+            f"query={query or 'default'}:"
+            f"page={page}:"
+            f"size={size}"
+        )
+
+    def _build_person_cache_key(
+        self,
+        person_id: str,
+        page: int,
+        size: int,
+        ) -> str:
+        return (
+            "films:person:"
+            f"person_id={person_id}:"
             f"page={page}:"
             f"size={size}"
         )

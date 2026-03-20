@@ -38,7 +38,12 @@ class FilmCacheRepository:
         films = [Film(**film) for film in obj["films"]]
         return total, films
 
-    async def put_list(self, key: str, value: tuple[int, list[Film]]) -> None:
+    async def put_list(
+        self,
+        key: str,
+        value: tuple[int, list[Film]],
+        ttl: int = LIST_FILM_CACHE_EXPIRE_IN_SECONDS,
+        ) -> None:
         total, films = value
         payload = {
             "total": total,
@@ -47,5 +52,5 @@ class FilmCacheRepository:
         await self.redis.set(
             key,
             json.dumps(payload),
-            LIST_FILM_CACHE_EXPIRE_IN_SECONDS,
+            ttl,
             )
