@@ -66,11 +66,11 @@ async def film_details(
             ],
         actors=[
             PersonsResponse(uuid=a.id, name=a.name)
-            for a in film.directors
+            for a in film.actors
             ],
         writers=[
             PersonsResponse(uuid=w.id, name=w.name)
-            for w in film.directors
+            for w in film.writers
             ],
         )
 

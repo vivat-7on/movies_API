@@ -4,15 +4,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class TestSettings(BaseSettings):
     es_host: str = Field(
-        "http://127.0.0.1:9200", validation_alias="ES_HOST",
+        "127.0.0.1", validation_alias="ES_HOST",
         )
+    es_port: int = Field(9200, validation_alias="ES_PORT")
     es_index: str = Field("movies", validation_alias="ES_INDEX")
     es_id_field: str = Field("id", validation_alias="ES_ID_FIELD")
     es_index_mapping: dict = {
         "mappings": {
             "properties": {
                 "id": {"type": "keyword"},
-                "imdb_id": {"type": "float"},
+                "imdb_rating": {"type": "float"},
                 "genres": {"type": "keyword"},
                 "description": {"type": "text"},
                 "directors": {"type": "keyword"},
@@ -27,7 +28,8 @@ class TestSettings(BaseSettings):
             },
         }
 
-    redis_host: str = Field("cache", validation_alias="REDIS_HOST")
+    redis_host: str = Field("127.0.0.1", validation_alias="REDIS_HOST")
+    redis_port: int = 6379
     service_url: str = Field(
         "http://127.0.0.1:8000", validation_alias="SERVICE_URL",
         )

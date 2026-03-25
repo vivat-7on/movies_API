@@ -1,6 +1,8 @@
 from uuid import UUID
 
 from attrs import frozen
+from elasticsearch import NotFoundError
+
 from models.film import Film
 from repositories.cache.film_cache import FilmCacheRepository
 from repositories.elastic.film_elastic import FilmElasticRepository
@@ -87,11 +89,17 @@ class FilmService:
         if cached is not None:
             return cached
 
-        result = await self.elastic_repo.search(
-            query=query,
-            page=page,
-            size=size,
-            )
+        try:
+            result = await self.elastic_repo.search(
+                query=query,
+                page=page,
+                size=size,
+                )
+        except NotFoundError:
+            cached = await self.cache_repo.get_list(cache_key)
+            if cached is not None:
+                return cached
+            raise
 
         await self.cache_repo.put_list(
             key=cache_key,
