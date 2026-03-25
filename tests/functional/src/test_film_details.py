@@ -39,19 +39,19 @@ from tests.functional.settings import test_settings
         ],
     )
 @pytest.mark.asyncio
-async def test_film_get_by_id(
+async def test_film_detail_by_id(
     es_write_data,
     generate_movies,
     make_bulk,
     make_get_request,
-    es_client,
     query_data,
     expected_answer,
     ):
+    title = "The Star"
     film_id = query_data.get("film_id")
     search_film_id = query_data.get("search_film_id")
 
-    docs = generate_movies(1, "The Star", film_id)
+    docs = generate_movies(1, title, film_id)
     bulk = make_bulk(docs)
     await es_write_data(bulk)
 
@@ -61,3 +61,132 @@ async def test_film_get_by_id(
     assert status == expected_answer.get("status_code")
     if status == 200:
         assert body["uuid"] == expected_answer.get("request_film_id")
+        assert body["title"] == title
+
+
+@pytest.mark.asyncio
+async def test_film_detail_cache_works(
+    es_write_data,
+    generate_movies,
+    make_bulk,
+    make_get_request,
+    es_client,
+    ):
+    title = "The Star"
+    film_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
+    docs = generate_movies(1, title, film_id)
+    bulk = make_bulk(docs)
+    await es_write_data(bulk)
+    url = test_settings.service_url + '/api/v1/films/{}'.format(film_id)
+    query = {}
+
+    body, status, _ = await make_get_request(url, query)
+    assert status == 200
+    assert body["uuid"] == film_id
+    assert body["title"] == title
+
+    # убиваем ES
+    await es_client.indices.delete(index=test_settings.es_index)
+
+    # Данные из кеша
+    body, status, _ = await make_get_request(url, query)
+    assert status == 200
+    assert body["uuid"] == film_id
+    assert body["title"] == title
+
+
+@pytest.mark.asyncio
+async def test_film_detail_cache_isolation(
+    es_write_data,
+    generate_movies,
+    make_bulk,
+    make_get_request,
+    es_client,
+    ):
+    title = "The Star"
+    film_first_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
+    film_second_id = "7c73d579-f394-4153-aa41-eee981f36f13"
+    docs = generate_movies(1, title, film_first_id)
+    docs.extend(generate_movies(1, title, film_second_id))
+    bulk = make_bulk(docs)
+    await es_write_data(bulk)
+
+    url = test_settings.service_url + '/api/v1/films/{}'.format(film_first_id)
+    query = {}
+
+    body, status, _ = await make_get_request(url, query)
+    assert status == 200
+    assert body["uuid"] == film_first_id
+    assert body["title"] == title
+
+    # убиваем ES
+    await es_client.indices.delete(index=test_settings.es_index)
+
+    # Данные из кеша
+    body, status, _ = await make_get_request(url, query)
+    assert status == 200
+    assert body["uuid"] == film_first_id
+    assert body["title"] == title
+
+    # Таких данных в кеше быть не должно
+    url = test_settings.service_url + '/api/v1/films/{}'.format(film_second_id)
+    body, status, _ = await make_get_request(url, query)
+    assert status == 404
+
+
+@pytest.mark.asyncio
+async def test_film_detail_cache_expired_or_cleared(
+    es_write_data,
+    generate_movies,
+    make_bulk,
+    make_get_request,
+    es_client,
+    redis_flush,
+    ):
+    title = "The Star"
+    film_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
+    docs = generate_movies(1, title, film_id)
+    bulk = make_bulk(docs)
+    await es_write_data(bulk)
+    url = test_settings.service_url + '/api/v1/films/{}'.format(film_id)
+    query = {}
+
+    body, status, _ = await make_get_request(url, query)
+    assert status == 200
+    assert body["uuid"] == film_id
+    assert body["title"] == title
+
+    # Сбрасываем кэш
+    await redis_flush()
+
+    # убиваем ES
+    await es_client.indices.delete(index=test_settings.es_index)
+
+    # Данных нет
+    body, status, _ = await make_get_request(url, query)
+    assert status == 404
+
+
+@pytest.mark.asyncio
+async def test_film_detail_es_down_initially(
+    es_write_data,
+    generate_movies,
+    make_bulk,
+    make_get_request,
+    es_client,
+    ):
+    title = "The Star"
+    film_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
+    docs = generate_movies(1, title, film_id)
+    bulk = make_bulk(docs)
+    await es_write_data(bulk)
+
+    # ES умер до первого запроса
+    await es_client.indices.delete(index=test_settings.es_index)
+
+    url = test_settings.service_url + '/api/v1/films/{}'.format(film_id)
+    query = {}
+
+    # Данных нет
+    body, status, _ = await make_get_request(url, query)
+    assert status == 404
