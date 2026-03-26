@@ -59,11 +59,14 @@ class FilmElasticRepository:
                     },
                 ],
             }
+        try:
+            response = await self.elastic.search(
+                index="movies",
+                body=body,
+                )
+        except NotFoundError:
+            return 0, []
 
-        response = await self.elastic.search(
-            index="movies",
-            body=body,
-            )
         total = response["hits"]["total"]["value"]
         films = [
             Film(**hit["_source"])

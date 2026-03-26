@@ -44,8 +44,8 @@ def make_get_request(session):
             text = await response.text()
             try:
                 body = await response.json()
-            except body:
-                body = text
+            except Exception:
+                body = await response.text()
             headers = response.headers
             status = response.status
         return body, status, headers
@@ -59,11 +59,11 @@ def generate_movies():
         count: int = 60,
         title: str = "The Star",
         id: uuid.UUID = None,
+        rating: float = 8.5,
+        genres: list[dict] = None,
         ) -> list[dict]:
-        return [{
-            'id': id if id is not None else str(uuid.uuid4()),
-            'imdb_rating': 8.5,
-            'genres': [
+        if genres is None:
+            genres = [
                 {
                     'id': 'ef86b8ff-3c82-4d31-ad8e-72b69f4e3f11',
                     'name': 'Action',
@@ -72,7 +72,11 @@ def generate_movies():
                     'id': 'ef86b8ff-3c82-4d31-ad8e-72b69f4e3f22',
                     'name': 'Sci-Fi',
                     },
-                ],
+                ]
+        return [{
+            'id': id if id is not None else str(uuid.uuid4()),
+            'imdb_rating': rating,
+            'genres': genres,
             'title': title,
             'description': 'New World',
             'actors_names': ['Ann', 'Bob'],

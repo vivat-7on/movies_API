@@ -67,6 +67,7 @@ class FilmService:
             page=page,
             size=size,
             )
+
         await self.cache_repo.put_list(cache_key, result)
 
         return result
