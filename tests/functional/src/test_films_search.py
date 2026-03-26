@@ -2,6 +2,7 @@ import pytest
 
 from tests.functional.fixtures.es import es_client
 from tests.functional.settings import test_settings
+from tests.functional.testdata.testdata import MAPPING_MOVIES
 
 
 @pytest.mark.parametrize(
@@ -36,10 +37,17 @@ async def test_films_search_by_query(
     ):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
-    bulk_query = make_bulk(es_data)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
 
     # 2. Загружаем данные в ES
-    await es_write_data(bulk_query)
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     # 3. Запрашиваем данные из ES по API
     url = test_settings.service_url + '/api/v1/films/search'
@@ -87,11 +95,18 @@ async def test_films_search_pagination(
     expected_answer,
     ):
     # 1. Генерируем данные для ES
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
 
     # 2. Загружаем данные в ES
-    await es_write_data(bulk)
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     # 3. Запрашиваем данные из ES по API
     url = test_settings.service_url + '/api/v1/films/search'
@@ -170,11 +185,18 @@ async def test_films_search_invalid_page(
     expected_answer,
     ):
     # 1. Генерируем данные для ES
-    docs = generate_movies(10, "The Star")
-    bulk = make_bulk(docs)
+    es_data = generate_movies(10, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
 
     # 2. Загружаем данные в ES
-    await es_write_data(bulk)
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     # 3. Запрашиваем данные из ES по API
     url = test_settings.service_url + '/api/v1/films/search'
@@ -197,9 +219,16 @@ async def test_films_search_cache_works(
     es_client,
     ):
     # 1. Генерируем данные для ES
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     # 2. Первый запрос — прогреваем кеш
     url = test_settings.service_url + '/api/v1/films/search'
@@ -226,9 +255,16 @@ async def test_films_search_cache_expired_or_cleared(
     redis_flush,
     ):
     # 1. Генерируем данные для ES
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     # 2. Первый запрос — прогреваем кеш
     url = test_settings.service_url + '/api/v1/films/search'
@@ -257,9 +293,16 @@ async def test_films_search_cache_isolation(
     es_client,
     ):
     # 1. Генерируем данные для ES
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films/search'
     query = {"query": "The Star"}
@@ -288,9 +331,16 @@ async def test_films_search_cache_isolation_by_pagination(
     es_client,
     ):
     # 1. Генерируем данные для ES
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films/search'
     query = {"query": "The Star", "page_size": 10, "page_number": 1}

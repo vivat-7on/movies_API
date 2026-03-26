@@ -1,6 +1,7 @@
 import pytest
 
 from tests.functional.settings import test_settings
+from tests.functional.testdata.testdata import MAPPING_MOVIES
 
 
 @pytest.mark.asyncio
@@ -11,8 +12,15 @@ async def test_film_list_basic(
     make_bulk,
     ):
     es_data = generate_movies(60, "The Star")
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {
@@ -70,8 +78,15 @@ async def test_film_list_pagination(
     expected_answer,
     ):
     es_data = generate_movies(60, "The Star")
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {
@@ -93,8 +108,15 @@ async def test_film_list_default_pagination(
     make_get_request,
     ):
     es_data = generate_movies(60, "The Star")
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {}
@@ -156,8 +178,15 @@ async def test_film_list_invalid_pagination(
     expected_answer,
     ):
     es_data = generate_movies(60, "The Star")
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {
@@ -179,8 +208,15 @@ async def test_film_list_sort_rating_asc(
     es_data = generate_movies(1, "The Star", rating=1.0)
     for r in range(2, 11):
         es_data.extend(generate_movies(1, "The Star", rating=float(r)))
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {
@@ -209,8 +245,15 @@ async def test_film_list_sort_rating_desc(
     es_data = generate_movies(1, "The Star", rating=1.0)
     for r in range(2, 11):
         es_data.extend(generate_movies(1, "The Star", rating=float(r)))
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {
@@ -276,8 +319,15 @@ async def test_film_list_filter_by_genre(
                 ),
             )
 
-    bulk_query = make_bulk(es_data)
-    await es_write_data(bulk_query)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     for genre, film in zip(genre_ids, film_ids):
@@ -299,9 +349,16 @@ async def test_film_list_cache_works(
     make_get_request,
     es_client,
     ):
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {
@@ -326,9 +383,16 @@ async def test_film_list_cache_isolation_pagination(
     make_get_request,
     es_client,
     ):
-    docs = generate_movies(60, "The Star")
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(60, "The Star")
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films'
     query = {"page_number": 1}

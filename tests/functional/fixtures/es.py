@@ -10,8 +10,6 @@ from elasticsearch.helpers import async_bulk
 
 from tests.functional.settings import test_settings
 
-from tests.functional.testdata.testdata import MAPPING_MOVIES
-
 
 @pytest_asyncio.fixture(scope='session')
 def event_loop():
@@ -106,7 +104,7 @@ def generate_movies():
 
 @pytest.fixture
 def make_bulk(generate_movies):
-    def inner(docs, index='movies'):
+    def inner(docs, index):
         bulk = []
         for row in docs:
             data = {'_index': index, '_id': row['id']}
@@ -119,16 +117,16 @@ def make_bulk(generate_movies):
 
 @pytest_asyncio.fixture(name='es_write_data')
 def es_write_data(es_client):
-    async def inner(data: list[dict]):
-        if await es_client.indices.exists(index=test_settings.es_index):
-            await es_client.indices.delete(index=test_settings.es_index)
+    async def inner(index: str, mapping: dict, data: list[dict]):
+        if await es_client.indices.exists(index=index):
+            await es_client.indices.delete(index=index)
         await es_client.indices.create(
-            index=test_settings.es_index,
-            **MAPPING_MOVIES,
+            index=index,
+            **mapping,
             )
 
         updated, errors = await async_bulk(client=es_client, actions=data)
-        await es_client.indices.refresh(index=test_settings.es_index)
+        await es_client.indices.refresh(index=index)
 
         if errors:
             raise Exception('Ошибка записи данных в Elasticsearch')

@@ -9,24 +9,6 @@ class TestSettings(BaseSettings):
     es_port: int = Field(9200, validation_alias="ES_PORT")
     es_index: str = Field("movies", validation_alias="ES_INDEX")
     es_id_field: str = Field("id", validation_alias="ES_ID_FIELD")
-    es_index_mapping: dict = {
-        "mappings": {
-            "properties": {
-                "id": {"type": "keyword"},
-                "imdb_rating": {"type": "float"},
-                "genres": {"type": "keyword"},
-                "description": {"type": "text"},
-                "directors": {"type": "keyword"},
-                "actors_names": {"type": "keyword"},
-                "writers_names": {"type": "keyword"},
-                "actors": {"type": "keyword"},
-                "writers": {"type": "date"},
-                "created_at": {"type": "date"},
-                "updated_at": {"type": "keyword"},
-                "film_work_type": {"type": "keyword"},
-                },
-            },
-        }
 
     redis_host: str = Field("127.0.0.1", validation_alias="REDIS_HOST")
     redis_port: int = 6379

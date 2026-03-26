@@ -1,6 +1,7 @@
 import pytest
 
 from tests.functional.settings import test_settings
+from tests.functional.testdata.testdata import MAPPING_MOVIES
 
 
 @pytest.mark.parametrize(
@@ -51,9 +52,16 @@ async def test_film_detail_by_id(
     film_id = query_data.get("film_id")
     search_film_id = query_data.get("search_film_id")
 
-    docs = generate_movies(1, title, film_id)
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(1, title, film_id)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films/{}'.format(search_film_id)
     query = {}
@@ -74,9 +82,16 @@ async def test_film_detail_cache_works(
     ):
     title = "The Star"
     film_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
-    docs = generate_movies(1, title, film_id)
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(1, title, film_id)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
     url = test_settings.service_url + '/api/v1/films/{}'.format(film_id)
     query = {}
 
@@ -106,10 +121,17 @@ async def test_film_detail_cache_isolation(
     title = "The Star"
     film_first_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
     film_second_id = "7c73d579-f394-4153-aa41-eee981f36f13"
-    docs = generate_movies(1, title, film_first_id)
-    docs.extend(generate_movies(1, title, film_second_id))
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(1, title, film_first_id)
+    es_data.extend(generate_movies(1, title, film_second_id))
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     url = test_settings.service_url + '/api/v1/films/{}'.format(film_first_id)
     query = {}
@@ -145,9 +167,16 @@ async def test_film_detail_cache_expired_or_cleared(
     ):
     title = "The Star"
     film_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
-    docs = generate_movies(1, title, film_id)
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(1, title, film_id)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
     url = test_settings.service_url + '/api/v1/films/{}'.format(film_id)
     query = {}
 
@@ -177,9 +206,16 @@ async def test_film_detail_es_down_initially(
     ):
     title = "The Star"
     film_id = "c6f9460c-ed85-4076-9f52-19b5c67b4178"
-    docs = generate_movies(1, title, film_id)
-    bulk = make_bulk(docs)
-    await es_write_data(bulk)
+    es_data = generate_movies(1, title, film_id)
+    bulk = make_bulk(
+        docs=es_data,
+        index="movies",
+        )
+    await es_write_data(
+        index="movies",
+        mapping=MAPPING_MOVIES,
+        data=bulk,
+        )
 
     # ES умер до первого запроса
     await es_client.indices.delete(index=test_settings.es_index)
