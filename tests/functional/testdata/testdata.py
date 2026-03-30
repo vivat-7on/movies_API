@@ -39,3 +39,41 @@ MAPPING_MOVIES = {
             },
         },
     }
+
+MAPPING_GENRES = {
+    "mappings": {
+        "dynamic": "strict",
+        "properties": {
+            "id": {
+                "type": "keyword",
+                },
+            "name": {
+                "type": "text",
+                "fields": {
+                    "raw": {
+                        "type": "keyword",
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+MAPPING_PERSONS = {
+    "mappings": {
+        "dynamic": "strict",
+        "properties": {
+            "id": {
+                "type": "keyword",
+                },
+            "name": {
+                "type": "text",
+                "fields": {
+                    "raw": {
+                        "type": "keyword",
+                        },
+                    },
+                },
+            },
+        },
+    }

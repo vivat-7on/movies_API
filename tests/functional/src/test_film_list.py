@@ -314,7 +314,7 @@ async def test_film_list_filter_by_genre(
             generate_movies(
                 count=1,
                 title="The Star",
-                id=film,
+                film_id=film,
                 genres=genres,
                 ),
             )

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.container import create_genre_service
@@ -9,10 +11,10 @@ router = APIRouter()
 
 @router.get("/{genre_id}", response_model=GenreResponse)
 async def get_genre(
-    genre_id: str,
+    genre_id: UUID,
     service: GenreService = Depends(create_genre_service),
     ) -> GenreResponse:
-    genre = await service.get_by_id(genre_id=genre_id)
+    genre = await service.get_by_id(genre_id=str(genre_id))
     if not genre:
         raise HTTPException(
             status_code=404,

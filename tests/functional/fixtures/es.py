@@ -56,9 +56,9 @@ def generate_movies():
     def inner(
         count: int = 60,
         title: str = "The Star",
-        id: uuid.UUID = None,
+        film_id: str | None = None,
         rating: float = 8.5,
-        genres: list[dict] = None,
+        genres: list[dict] | None = None,
         ) -> list[dict]:
         if genres is None:
             genres = [
@@ -72,7 +72,7 @@ def generate_movies():
                     },
                 ]
         return [{
-            'id': id if id is not None else str(uuid.uuid4()),
+            'id': film_id if film_id is not None else str(uuid.uuid4()),
             'imdb_rating': rating,
             'genres': genres,
             'title': title,
@@ -130,5 +130,27 @@ def es_write_data(es_client):
 
         if errors:
             raise Exception('Ошибка записи данных в Elasticsearch')
+
+    return inner
+
+
+@pytest.fixture
+def generate_genres():
+    def inner(
+        count: int = 10,
+        genre_id: str | None = None,
+        name_prefix: str | None = "Genre",
+        ) -> list[dict]:
+        genres = []
+
+        for i in range(count):
+            genres.append(
+                {
+                    "id": genre_id if genre_id else str(uuid.uuid4()),
+                    "name": f"{name_prefix} {i}",
+                    },
+                )
+
+        return genres
 
     return inner
