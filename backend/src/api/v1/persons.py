@@ -92,14 +92,12 @@ async def persons_list(
     page_number: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     sort: str | None = Query(None),
-    search: str | None = Query(None),
     service: PersonService = Depends(create_person_service),
     ) -> PersonListResponse:
     total, persons = await service.get_list(
         page=page_number,
         size=page_size,
         sort=sort,
-        search=search,
         )
     return PersonListResponse(
         count=total,

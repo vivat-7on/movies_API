@@ -18,23 +18,12 @@ class PersonElasticRepository:
         self,
         sort_field: str | None,
         sort_order: str | None,
-        search: str | None,
         page: int,
         size: int,
         ) -> tuple[int, list[Person]]:
         offset = (page - 1) * size
 
-        if search:
-            query = {
-                "match": {
-                    "name": {
-                        "query": search,
-                        "operator": "and",
-                        },
-                    },
-                }
-        else:
-            query = {"match_all": {}}
+        query = {"match_all": {}}
 
         body = {
             "from": offset,
@@ -81,10 +70,13 @@ class PersonElasticRepository:
                 },
             }
 
-        response = await self.elastic.search(
-            index="persons",
-            body=body,
-            )
+        try:
+            response = await self.elastic.search(
+                index="persons",
+                body=body,
+                )
+        except NotFoundError:
+            return 0, []
 
         total = response["hits"]["total"]["value"]
         persons = [

@@ -154,3 +154,25 @@ def generate_genres():
         return genres
 
     return inner
+
+
+@pytest.fixture
+def generate_persons():
+    def inner(
+        count: int = 10,
+        person_id: str | None = None,
+        name_prefix: str | None = "Person",
+        ) -> list[dict]:
+        genres = []
+
+        for i in range(count):
+            genres.append(
+                {
+                    "id": person_id if person_id else str(uuid.uuid4()),
+                    "name": f"{name_prefix} {i}",
+                    },
+                )
+
+        return genres
+
+    return inner

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from attrs import frozen
+from elasticsearch import NotFoundError
 
 from models.film import Person, Film
 from repositories.cache.person_cache import PersonCacheRepository
@@ -34,11 +35,9 @@ class PersonService:
         sort: str | None,
         page: int,
         size: int,
-        search: str | None,
         ) -> tuple[int, list[Person]]:
-        cache_key = self._build_cache_key(
+        cache_key = self._build_cache_list_key(
             sort=sort,
-            search=search,
             page=page,
             size=size,
             )
@@ -57,14 +56,12 @@ class PersonService:
         result = await self.elastic_repo.get_list(
             sort_field=sort_field,
             sort_order=sort_order,
-            search=search,
             page=page,
             size=size,
             )
         await self.cache_repo.put_list(cache_key, result)
 
         return result
-
 
     async def get_films(
         self,
@@ -84,23 +81,54 @@ class PersonService:
         page_number: int,
         page_size: int,
         ) -> tuple[int, list[Person]]:
-        return await self.elastic_repo.search(
+        cache_key = self._build_search_cache_key(
             query=query,
-            page_number=page_number,
-            page_size=page_size,
+            page=page_number,
+            size=page_size,
             )
 
-    def _build_cache_key(
+        cached = await self.cache_repo.get_list(cache_key)
+        if cached is not None:
+            return cached
+
+        try:
+            result = await self.elastic_repo.search(
+                query=query,
+                page_number=page_number,
+                page_size=page_size,
+                )
+        except NotFoundError:
+            cached = await self.cache_repo.get_list(cache_key)
+            if cached is not None:
+                return cached
+            raise
+
+        await self.cache_repo.put_list(key=cache_key, value=result)
+
+        return result
+
+    def _build_cache_list_key(
         self,
         sort: str,
-        search: str,
         page: int,
         size: int,
         ) -> str:
         return (
             "person:list:"
             f"sort={sort or 'default'}:"
-            f"query={search or 'all'}:"
+            f"page={page}:"
+            f"size={size}"
+        )
+
+    def _build_search_cache_key(
+        self,
+        query: str,
+        page: int,
+        size: int,
+        ) -> str:
+        return (
+            "person:search:"
+            f"query={query or 'all'}:"
             f"page={page}:"
             f"size={size}"
         )
