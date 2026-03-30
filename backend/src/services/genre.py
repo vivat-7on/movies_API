@@ -1,4 +1,5 @@
 from attrs import frozen
+from elasticsearch import NotFoundError
 
 from models.film import Genre
 from repositories.cache.genre_cache import GenreCacheRepository
@@ -53,14 +54,20 @@ class GenreService:
             field = sort.lstrip("-")
             sort_field = SORT_FIELDS.get(field, "name.raw")
 
-        result = await self.elastic_repo.get_list(
-            sort_field=sort_field,
-            sort_order=sort_order,
-            search=search,
-            page=page,
-            size=size,
-            )
-        await self.cache_repo.put_list(cache_key, result)
+        try:
+            result = await self.elastic_repo.get_list(
+                sort_field=sort_field,
+                sort_order=sort_order,
+                search=search,
+                page=page,
+                size=size,
+                )
+            await self.cache_repo.put_list(cache_key, result)
+        except NotFoundError:
+            cached = await self.elastic_repo.get_list(cache_key)
+            if cached:
+                return cached
+            raise
 
         return result
 

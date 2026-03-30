@@ -3,6 +3,7 @@ import pytest
 from tests.functional.settings import test_settings
 from tests.functional.testdata.testdata import MAPPING_MOVIES
 
+BASE_URL = test_settings.service_url + '/api/v1/films'
 
 @pytest.mark.asyncio
 async def test_film_list_basic(
@@ -22,11 +23,10 @@ async def test_film_list_basic(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {
         "page_number": 1,
         }
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
 
     assert status == 200
     assert len(body["results"]) == 50
@@ -88,12 +88,11 @@ async def test_film_list_pagination(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {
         "page_number": query_data.get("page_number"),
         "page_size": query_data.get("page_size"),
         }
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
 
     assert status == expected_answer.get("status")
     assert len(body["results"]) == expected_answer.get("length")
@@ -118,9 +117,8 @@ async def test_film_list_default_pagination(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {}
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
 
     assert status == 200
     assert len(body["results"]) == 50
@@ -188,12 +186,11 @@ async def test_film_list_invalid_pagination(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {
         "page_number": query_data.get("page_number"),
         "page_size": query_data.get("page_size"),
         }
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
 
     assert status == expected_answer.get("status")
 
@@ -218,13 +215,12 @@ async def test_film_list_sort_rating_asc(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {
         "page_number": 1,
         "page_size": 5,
         "sort": "imdb_rating",
         }
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
 
     assert status == 200
     assert len(body["results"]) == 5
@@ -255,13 +251,12 @@ async def test_film_list_sort_rating_desc(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {
         "page_number": 1,
         "page_size": 5,
         "sort": "-imdb_rating",
         }
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
 
     assert status == 200
     assert len(body["results"]) == 5
@@ -329,12 +324,11 @@ async def test_film_list_filter_by_genre(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     for genre, film in zip(genre_ids, film_ids):
         query = {
             "genre": genre,
             }
-        body, status, _ = await make_get_request(url, query)
+        body, status, _ = await make_get_request(BASE_URL, query)
         ids = [film["uuid"] for film in body["results"]]
 
         assert status == 200
@@ -360,18 +354,17 @@ async def test_film_list_cache_works(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {
         "page_number": 1,
         "page_size": 50,
         }
 
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
     assert status == 200
 
     await es_client.indices.delete(index=test_settings.es_index)
 
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
     assert len(body['results']) == 50
 
 
@@ -394,19 +387,18 @@ async def test_film_list_cache_isolation_pagination(
         data=bulk,
         )
 
-    url = test_settings.service_url + '/api/v1/films'
     query = {"page_number": 1}
 
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
     assert status == 200
 
     await es_client.indices.delete(index=test_settings.es_index)
 
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
     assert len(body['results']) == 50
     assert body['count'] == 60
 
     query = {"page_number": 2}
-    body, status, _ = await make_get_request(url, query)
+    body, status, _ = await make_get_request(BASE_URL, query)
     assert status == 200
     assert body["results"] == []
