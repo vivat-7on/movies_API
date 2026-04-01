@@ -211,3 +211,10 @@ def generate_movies_with_person():
             } for i in range(count)]
 
     return inner
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def clear_es(es_client):
+    await es_client.indices.delete(index="persons", ignore_unavailable=True)
+    await es_client.indices.delete(index="movies", ignore_unavailable=True)
+    await es_client.indices.delete(index="genres", ignore_unavailable=True)
