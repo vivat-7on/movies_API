@@ -127,26 +127,45 @@ class FilmElasticRepository:
             "size": size,
             "query": {
                 "bool": {
-                    "filter": [
+                    "should": [
                         {
                             "nested": {
                                 "path": "actors",
                                 "query": {
-                                    "term": {
-                                        "actors.id": person_id,
-                                        },
+                                    "term": {"actors.id": person_id}
+                                    },
+                                },
+                            },
+                        {
+                            "nested": {
+                                "path": "directors",
+                                "query": {
+                                    "term": {"directors.id": person_id}
+                                    },
+                                },
+                            },
+                        {
+                            "nested": {
+                                "path": "writers",
+                                "query": {
+                                    "term": {"writers.id": person_id}
                                     },
                                 },
                             },
                         ],
+                    "minimum_should_match": 1,
                     },
                 },
             }
 
-        response = await self.elastic.search(
-            index="movies",
-            body=body,
-            )
+        try:
+            response = await self.elastic.search(
+                index="movies",
+                body=body,
+                )
+        except NotFoundError:
+            return 0, []
+
         total = response["hits"]["total"]["value"]
         films = [
             Film(**hit["_source"])

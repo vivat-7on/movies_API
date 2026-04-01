@@ -176,3 +176,38 @@ def generate_persons():
         return genres
 
     return inner
+
+
+@pytest.fixture
+def generate_movies_with_person():
+    def inner(
+        person_id: str,
+        count: int = 60,
+        role: str = "actor",  # actor | director | writer
+        ) -> list[dict]:
+
+        def build_role(role_name: str) -> list[dict]:
+            if role == role_name:
+                return [{"id": person_id, "name": "Test Person"}]
+            return []
+
+        return [{
+            'id': str(uuid.uuid4()),
+            'imdb_rating': 8.5,
+            'genres': [
+                {'id': str(uuid.uuid4()), 'name': 'Action'},
+                ],
+            'title': f"Film {i}",
+            'description': 'New World',
+            'actors_names': ['Test Person'] if role == 'actors' else [],
+            'writers_names': ['Test Person'] if role == 'directors' else [],
+            'directors_names': ['Test Person'] if role == 'writers' else [],
+            'actors': build_role('actor'),
+            'directors': build_role('director'),
+            'writers': build_role('writer'),
+            'created_at': datetime.datetime.now().isoformat(),
+            'updated_at': datetime.datetime.now().isoformat(),
+            'film_work_type': 'movie',
+            } for i in range(count)]
+
+    return inner

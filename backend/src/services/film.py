@@ -129,11 +129,17 @@ class FilmService:
         if cached is not None:
             return cached
 
-        result = await self.elastic_repo.get_by_person_id(
-            person_id=person_id_str,
-            page=page,
-            size=size,
-            )
+        try:
+            result = await self.elastic_repo.get_by_person_id(
+                person_id=person_id_str,
+                page=page,
+                size=size,
+                )
+        except NotFoundError:
+            cached = await self.cache_repo.get_list(cache_key)
+            if cached is not None:
+                return cached
+            raise
 
         await self.cache_repo.put_list(cache_key, result)
 
