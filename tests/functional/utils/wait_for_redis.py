@@ -1,9 +1,13 @@
+import os
 import time
 
 import redis
 
-if __name__ == '__main__':
-    client = redis.Redis(host='localhost', port=6379, db=0)
+HOST = os.getenv("REDIS_HOST", "localhost")
+PORT = os.getenv("REDIS_PORT", "6379")
+
+if __name__ == "__main__":
+    client = redis.Redis(host=HOST, port=int(PORT), db=0)
     for i in range(100):
         try:
             client.get("ping")
