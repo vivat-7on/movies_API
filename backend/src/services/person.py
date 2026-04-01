@@ -53,12 +53,19 @@ class PersonService:
             field = sort.lstrip("-")
             sort_field = SORT_FIELDS.get(field, "name.raw")
 
-        result = await self.elastic_repo.get_list(
-            sort_field=sort_field,
-            sort_order=sort_order,
-            page=page,
-            size=size,
-            )
+        try:
+            result = await self.elastic_repo.get_list(
+                sort_field=sort_field,
+                sort_order=sort_order,
+                page=page,
+                size=size,
+                )
+        except NotFoundError:
+            cached = await self.cache_repo.get_list(cache_key)
+            if cached is not None:
+                return cached
+            raise
+
         await self.cache_repo.put_list(cache_key, result)
 
         return result

@@ -38,10 +38,13 @@ class PersonElasticRepository:
                     },
                 ],
             }
-        response = await self.elastic.search(
-            index="persons",
-            body=body,
-            )
+        try:
+            response = await self.elastic.search(
+                index="persons",
+                body=body,
+                )
+        except NotFoundError:
+            return 0, []
 
         total = response["hits"]["total"]["value"]
         persons = [
