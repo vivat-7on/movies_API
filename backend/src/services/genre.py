@@ -19,13 +19,13 @@ class GenreService:
         self,
         genre_id: str,
         ) -> Genre | None:
-        genre = await self.cache_repo.get(genre_id=genre_id)
+        genre = await self.cache_repo.get(entity_id=genre_id)
         if not genre:
             genre = await self.elastic_repo.get_by_id(genre_id=genre_id)
             if not genre:
                 return None
 
-            await self.cache_repo.put(genre=genre)
+            await self.cache_repo.put(data=genre)
 
         return genre
 
@@ -62,12 +62,13 @@ class GenreService:
                 page=page,
                 size=size,
                 )
-            await self.cache_repo.put_list(cache_key, result)
         except NotFoundError:
-            cached = await self.elastic_repo.get_list(cache_key)
+            cached = await self.cache_repo.get_list(cache_key)
             if cached:
                 return cached
             raise
+
+        await self.cache_repo.put_list(cache_key, result)
 
         return result
 

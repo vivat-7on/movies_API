@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from elasticsearch import AsyncElasticsearch
 from fastapi.params import Depends
 from redis.asyncio import Redis
@@ -29,7 +27,6 @@ def create_film_cache_repository(
     return FilmCacheRepository(redis=redis)
 
 
-@lru_cache()
 def create_film_service(
     elastic_repo: FilmElasticRepository = Depends(
         create_film_elastic_repository,
@@ -54,7 +51,6 @@ def create_genre_cache_repository(
     return GenreCacheRepository(redis=redis)
 
 
-@lru_cache()
 def create_genre_service(
     elastic_repo: GenreElasticRepository = Depends(
         create_genre_elastic_repository,
@@ -79,7 +75,6 @@ def create_person_cache_repository(
     return PersonCacheRepository(redis=redis)
 
 
-@lru_cache()
 def create_person_service(
     elastic_repo: PersonElasticRepository = Depends(
         create_person_elastic_repository,

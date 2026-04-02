@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.params import Depends
 
 from api.v1.container import create_film_service
+from api.v1.dependencies.pagination import PaginationQuery
 from models.schemas import (
     FilmShort,
     FilmResponse,
@@ -20,19 +21,18 @@ router = APIRouter()
 @router.get('/search', response_model=FilmListResponse)
 async def films_search(
     query: str = Query(..., min_length=1),
-    page_size: int = Query(50, ge=1, le=100),
-    page_number: int = Query(1, ge=1, le=100),
+    pagination: PaginationQuery = Depends(),
     service: FilmService = Depends(create_film_service),
     ) -> FilmListResponse:
     total, films = await service.search(
         query=query,
-        page=page_number,
-        size=page_size,
+        page=pagination.page_number,
+        size=pagination.page_size,
         )
     return FilmListResponse(
         count=total,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         results=[
             FilmShort(
                 uuid=film.id,
@@ -77,8 +77,7 @@ async def film_details(
 
 @router.get('/', response_model=FilmListResponse)
 async def film_list(
-    page_number: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    pagination: PaginationQuery = Depends(),
     sort: str | None = Query(None),
     genre: UUID | None = Query(None),
     service: FilmService = Depends(create_film_service),
@@ -86,13 +85,13 @@ async def film_list(
     total, films = await service.get_list(
         sort=sort,
         genre=genre,
-        page=page_number,
-        size=page_size,
+        page=pagination.page_number,
+        size=pagination.page_size,
         )
     return FilmListResponse(
         count=total,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         results=[
             FilmShort(
                 uuid=film.id,

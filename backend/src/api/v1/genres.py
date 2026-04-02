@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.container import create_genre_service
+from api.v1.dependencies.pagination import PaginationQuery
 from models.schemas import GenreResponse, GenreListResponse
 from services.genre import GenreService
 
@@ -28,22 +29,21 @@ async def get_genre(
 
 @router.get("/", response_model=GenreListResponse)
 async def genres_list(
-    page_number: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    pagination: PaginationQuery = Depends(),
     sort: str | None = Query(None),
     search: str | None = Query(None),
     service: GenreService = Depends(create_genre_service),
     ) -> GenreListResponse:
     total, genres = await service.get_list(
-        page=page_number,
-        size=page_size,
+        page=pagination.page_number,
+        size=pagination.page_size,
         sort=sort,
         search=search,
         )
     return GenreListResponse(
         count=total,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         results=[
             GenreResponse(
                 uuid=genre.id,

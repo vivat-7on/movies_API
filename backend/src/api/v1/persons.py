@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.params import Query
 
 from api.v1.container import create_person_service
+from api.v1.dependencies.pagination import PaginationQuery
 from models.schemas import (
     PersonResponse, PersonListResponse, FilmListResponse,
     FilmShort,
@@ -16,19 +17,18 @@ router = APIRouter()
 @router.get("/search", response_model=PersonListResponse)
 async def persons_search(
     query: str = Query(..., min_length=1),
-    page_number: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    pagination: PaginationQuery = Depends(),
     service: PersonService = Depends(create_person_service),
     ) -> PersonListResponse:
     total, persons = await service.search(
         query=query,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         )
     return PersonListResponse(
         count=total,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         results=[
             PersonResponse(
                 uuid=person.id,
@@ -41,8 +41,7 @@ async def persons_search(
 @router.get("/{person_id}/film", response_model=FilmListResponse)
 async def persons_film(
     person_id: UUID,
-    page_number: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    pagination: PaginationQuery = Depends(),
     service: PersonService = Depends(create_person_service),
     ) -> FilmListResponse:
     person = await service.get_by_id(person_id=person_id)
@@ -53,13 +52,13 @@ async def persons_film(
             )
     total, films = await service.get_films(
         person_id=person_id,
-        page=page_number,
-        size=page_size,
+        page=pagination.page_number,
+        size=pagination.page_size,
         )
     return FilmListResponse(
         count=total,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         results=[
             FilmShort(
                 uuid=film.id,
@@ -89,20 +88,19 @@ async def get_person(
 
 @router.get("/", response_model=PersonListResponse)
 async def persons_list(
-    page_number: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    pagination: PaginationQuery = Depends(),
     sort: str | None = Query(None),
     service: PersonService = Depends(create_person_service),
     ) -> PersonListResponse:
     total, persons = await service.get_list(
-        page=page_number,
-        size=page_size,
+        page=pagination.page_number,
+        size=pagination.page_size,
         sort=sort,
         )
     return PersonListResponse(
         count=total,
-        page_number=page_number,
-        page_size=page_size,
+        page_number=pagination.page_number,
+        page_size=pagination.page_size,
         results=[
             PersonResponse(
                 uuid=person.id,

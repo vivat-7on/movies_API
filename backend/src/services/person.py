@@ -21,12 +21,12 @@ class PersonService:
 
     async def get_by_id(self, person_id: UUID) -> Person | None:
         person_id_str = str(person_id)
-        person = await self.cache_repo.get(person_id=person_id_str)
+        person = await self.cache_repo.get(entity_id=person_id_str)
         if not person:
             person = await self.elastic_repo.get_by_id(person_id=person_id_str)
             if not person:
                 return None
-            await self.cache_repo.put(person=person)
+            await self.cache_repo.put(data=person)
 
         return person
 

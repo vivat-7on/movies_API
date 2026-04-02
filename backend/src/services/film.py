@@ -21,7 +21,7 @@ class FilmService:
     async def get_by_id(self, film_id: UUID) -> Film | None:
         # Пытаемся получить данные из кеша
         film_id_str = str(film_id)
-        film = await self.cache_repo.get(film_id=film_id_str)
+        film = await self.cache_repo.get(entity_id=film_id_str)
         if not film:
             # Если фильма нет в кеше, то ищем его в Elasticsearch
             film = await self.elastic_repo.get_by_id(film_id=film_id_str)
@@ -30,7 +30,7 @@ class FilmService:
                 # значит, фильма вообще нет в базе
                 return None
             # Сохраняем фильм в кеш
-            await self.cache_repo.put(film=film)
+            await self.cache_repo.put(data=film)
 
         return film
 
