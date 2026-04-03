@@ -23,7 +23,7 @@ class PersonService:
         person_id_str = str(person_id)
         person = await self.cache_repo.get(entity_id=person_id_str)
         if not person:
-            person = await self.elastic_repo.get_by_id(person_id=person_id_str)
+            person = await self.elastic_repo.get_by_id(entity_id=person_id_str)
             if not person:
                 return None
             await self.cache_repo.put(data=person)
@@ -45,18 +45,9 @@ class PersonService:
         if cached:
             return cached
 
-        sort_field = "name.raw"
-        sort_order = "desc"
-
-        if sort:
-            sort_order = "desc" if sort.startswith("-") else "asc"
-            field = sort.lstrip("-")
-            sort_field = SORT_FIELDS.get(field, "name.raw")
-
         try:
-            result = await self.elastic_repo.get_list(
-                sort_field=sort_field,
-                sort_order=sort_order,
+            result = await self.elastic_repo.get_persons_list(
+                sort=sort,
                 page=page,
                 size=size,
                 )
@@ -100,9 +91,9 @@ class PersonService:
 
         try:
             result = await self.elastic_repo.search(
-                query=query,
-                page_number=page_number,
-                page_size=page_size,
+                text=query,
+                page=page_number,
+                size=page_size,
                 )
         except NotFoundError:
             cached = await self.cache_repo.get_list(cache_key)

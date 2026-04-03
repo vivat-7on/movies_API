@@ -1,89 +1,70 @@
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import AsyncElasticsearch
 
 from models.film import Person
+from repositories.elastic.base import BaseElasticRepository
+from repositories.elastic.query_builder import QueryBuilder
+from repositories.elastic.sort_builder import SortBuilder
+
+SORT_FIELDS = {
+    "name": "name.raw",
+    }
 
 
-class PersonElasticRepository:
+class PersonElasticRepository(BaseElasticRepository[Person]):
     def __init__(self, elastic: AsyncElasticsearch) -> None:
-        self.elastic = elastic
+        super().__init__(
+            elastic=elastic,
+            index="persons",
+            model=Person,
+            )
 
-    async def get_by_id(self, person_id: str) -> Person | None:
-        try:
-            doc = await self.elastic.get(index="persons", id=person_id)
-        except NotFoundError:
-            return None
-        return Person(**doc["_source"])
-
-    async def get_list(
+    async def get_persons_list(
         self,
-        sort_field: str | None,
-        sort_order: str | None,
+        sort: str | None,
         page: int,
         size: int,
         ) -> tuple[int, list[Person]]:
-        offset = (page - 1) * size
+        query = QueryBuilder().build()
 
-        query = {"match_all": {}}
+        field, order = self._parse_sort(sort)
 
-        body = {
-            "from": offset,
-            "size": size,
-            "query": query,
-            "sort": [
-                {
-                    sort_field: {
-                        "order": sort_order,
-                        "missing": "_last",
-                        },
-                    },
-                ],
-            }
-        try:
-            response = await self.elastic.search(
-                index="persons",
-                body=body,
-                )
-        except NotFoundError:
-            return 0, []
+        sort_clause = None
 
-        total = response["hits"]["total"]["value"]
-        persons = [
-            Person(**hit["_source"])
-            for hit in response["hits"]["hits"]
-            ]
+        if field and order:
+            sort_builder = SortBuilder(set(SORT_FIELDS.values()))
+            mapped_field = SORT_FIELDS.get(field)
+            if mapped_field:
+                sort_builder.add(
+                    field=mapped_field,
+                    order=order,
+                    )
+                sort_clause = sort_builder.build()
 
-        return total, persons
+        return await super().get_list(
+            query=query,
+            page=page,
+            size=size,
+            sort=sort_clause,
+            )
 
     async def search(
         self,
-        query: str,
-        page_number: int,
-        page_size: int,
+        text: str,
+        page: int,
+        size: int,
         ) -> tuple[int, list[Person]]:
-        offset = (page_number - 1) * page_size
-        body = {
-            "from": offset,
-            "size": page_size,
-            "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": ["name"],
-                    "fuzziness": "AUTO",
-                    },
+
+        query = {
+            "multi_match": {
+                "query": text,
+                "fields": ["name"],
+                "fuzziness": "AUTO",
                 },
             }
 
-        try:
-            response = await self.elastic.search(
-                index="persons",
-                body=body,
-                )
-        except NotFoundError:
-            return 0, []
-
-        total = response["hits"]["total"]["value"]
-        persons = [
-            Person(**hit["_source"])
-            for hit in response["hits"]["hits"]
-            ]
-        return total, persons
+        return await super().get_list(
+            query=query,
+            page=page,
+            size=size,
+            sort=None,
+            )

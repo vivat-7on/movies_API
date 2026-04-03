@@ -1,67 +1,58 @@
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import AsyncElasticsearch
 
 from models.film import Genre
+from repositories.elastic.base import BaseElasticRepository
+from repositories.elastic.query_builder import QueryBuilder
+from repositories.elastic.sort_builder import SortBuilder
+
+SORT_FIELDS = {
+    "name": "name.raw",
+    }
 
 
-class GenreElasticRepository:
+class GenreElasticRepository(BaseElasticRepository[Genre]):
     def __init__(self, elastic: AsyncElasticsearch) -> None:
-        self.elastic = elastic
+        super().__init__(
+            elastic=elastic,
+            index="genres",
+            model=Genre,
+            )
 
-    async def get_by_id(self, genre_id: str) -> Genre | None:
-        try:
-            doc = await self.elastic.get(index="genres", id=genre_id)
-        except NotFoundError:
-            return None
-        return Genre(**doc["_source"])
-
-    async def get_list(
+    async def get_genres_list(
         self,
-        sort_field: str | None,
-        sort_order: str | None,
+        sort: str | None,
         search: str | None,
         page: int,
         size: int,
         ) -> tuple[int, list[Genre]]:
-        offset = (page - 1) * size
+        query_builder = QueryBuilder()
 
         if search:
-            query = {
-                "match": {
-                    "name": {
-                        "query": search,
-                        "operator": "and",
-                        }
-                    }
-                }
-        else:
-            query = {"match_all": {}}
-
-        body = {
-            "from": offset,
-            "size": size,
-            "query": query,
-            "sort": [
-                {
-                    sort_field: {
-                        "order": sort_order,
-                        "missing": "_last",
-                        }
-                    }
-                ],
-            }
-
-        try:
-            response = await self.elastic.search(
-                index="genres",
-                body=body,
+            query_builder.match(
+                field="name",
+                value=search,
+                operator="and",
                 )
-        except NotFoundError:
-            return 0, []
 
-        total = response["hits"]["total"]["value"]
-        genres = [
-            Genre(**hit["_source"])
-            for hit in response["hits"]["hits"]
-            ]
+        query = query_builder.build()
 
-        return total, genres
+        field, order = self._parse_sort(sort)
+
+        sort_clause = None
+
+        if field and order:
+            sort_builder = SortBuilder(set(SORT_FIELDS.values()))
+            mapped_field = SORT_FIELDS.get(field)
+            if mapped_field:
+                sort_builder.add(
+                    field=mapped_field,
+                    order=order,
+                    )
+                sort_clause = sort_builder.build()
+
+        return await super().get_list(
+            query=query,
+            page=page,
+            size=size,
+            sort=sort_clause,
+            )

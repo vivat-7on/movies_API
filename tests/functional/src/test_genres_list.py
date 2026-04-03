@@ -242,7 +242,7 @@ async def test_genres_list_sort(
     [
         (
                 {
-                    "sort": "-desc",
+                    "sort": "-name",
                     "page_number": 1,
                     "page_size": 10,
                     },
@@ -250,7 +250,7 @@ async def test_genres_list_sort(
             ),
         (
                 {
-                    "sort": "asc",
+                    "sort": "name",
                     "page_number": 2,
                     "page_size": 10,
                     },

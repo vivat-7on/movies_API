@@ -1,118 +1,89 @@
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import AsyncElasticsearch
 
 from models.film import Film
+from repositories.elastic.base import BaseElasticRepository
+from repositories.elastic.query_builder import QueryBuilder
+from repositories.elastic.sort_builder import SortBuilder
+
+SORT_FIELDS = {
+    "imdb_rating": "imdb_rating",
+    "title": "title.raw",
+    }
 
 
-class FilmElasticRepository:
+class FilmElasticRepository(BaseElasticRepository[Film]):
     def __init__(self, elastic: AsyncElasticsearch) -> None:
-        self.elastic = elastic
+        super().__init__(
+            elastic=elastic,
+            index="movies",
+            model=Film,
+            )
 
-    async def get_by_id(self, film_id: str) -> Film | None:
-        try:
-            doc = await self.elastic.get(index='movies', id=film_id)
-        except NotFoundError:
-            return None
-        return Film(**doc['_source'])
-
-    async def get_list(
+    async def get_films_list(
         self,
-        sort_field: str | None,
-        sort_order: str | None,
+        sort: str | None,
         genre: str | None,
         page: int,
         size: int,
         ) -> tuple[int, list[Film]]:
-        offset = (page - 1) * size
-
-        filters = []
+        query_builder = QueryBuilder()
 
         if genre:
-            filters.append(
-                {
-                    "nested": {
-                        "path": "genres",
-                        "query": {
-                            "term": {
-                                "genres.id": genre,
-                                },
-                            },
-                        },
-                    },
+            query_builder.filter_nested(
+                path="genres",
+                field="genres.id",
+                value=genre,
                 )
 
-        query: dict
-        if filters:
-            query = {"bool": {"filter": filters}}
-        else:
-            query = {"match_all": {}}
+        query = query_builder.build()
 
-        body: dict = {
-            "from": offset,
-            "size": size,
-            "query": query,
-            "sort": [
-                {
-                    sort_field: {
-                        "order": sort_order,
-                        "missing": "_last",
-                        },
-                    },
-                ],
-            }
-        try:
-            response = await self.elastic.search(
-                index="movies",
-                body=body,
-                )
-        except NotFoundError:
-            return 0, []
+        field, order = self._parse_sort(sort)
 
-        total = response["hits"]["total"]["value"]
-        films = [
-            Film(**hit["_source"])
-            for hit in response["hits"]["hits"]
-            ]
-        return total, films
+        sort_clause = None
+
+        if field and order:
+            sort_builder = SortBuilder(set(SORT_FIELDS.values()))
+            mapped_field = SORT_FIELDS.get(field)
+            if mapped_field:
+                sort_builder.add(
+                    field=mapped_field,
+                    order=order,
+                    )
+                sort_clause = sort_builder.build()
+
+        return await super().get_list(
+            query=query,
+            page=page,
+            size=size,
+            sort=sort_clause,
+            )
 
     async def search(
         self,
-        query: str,
+        text: str,
         page: int,
         size: int,
         ) -> tuple[int, list[Film]]:
-        offset = (page - 1) * size
 
-        body: dict = {
-            "from": offset,
-            "size": size,
-            "query": {
-                "multi_match": {
-                    "query": query,
-                    "fields": [
-                        "title^3",
-                        "description",
-                        "actors_names",
-                        "directors_names",
-                        "writers_names",
-                        ],
-                    },
+        search_query = {
+            "multi_match": {
+                "query": text,
+                "fields": [
+                    "title^3",
+                    "description",
+                    "actors_names",
+                    "directors_names",
+                    "writers_names",
+                    ],
                 },
             }
 
-        try:
-            response = await self.elastic.search(
-                index="movies",
-                body=body,
-                )
-        except NotFoundError:
-            return 0, []
-
-        total = response["hits"]["total"]["value"]
-        films = [
-            Film(**hit["_source"])
-            for hit in response["hits"]["hits"]
-            ]
-        return total, films
+        return await super().get_list(
+            query=search_query,
+            page=page,
+            size=size,
+            sort=None,
+            )
 
     async def get_by_person_id(
         self,
@@ -120,55 +91,29 @@ class FilmElasticRepository:
         page: int,
         size: int,
         ) -> tuple[int, list[Film]]:
-        offset = (page - 1) * size
 
-        body = {
-            "from": offset,
-            "size": size,
-            "query": {
-                "bool": {
-                    "should": [
-                        {
-                            "nested": {
-                                "path": "actors",
-                                "query": {
-                                    "term": {"actors.id": person_id}
-                                    },
-                                },
-                            },
-                        {
-                            "nested": {
-                                "path": "directors",
-                                "query": {
-                                    "term": {"directors.id": person_id}
-                                    },
-                                },
-                            },
-                        {
-                            "nested": {
-                                "path": "writers",
-                                "query": {
-                                    "term": {"writers.id": person_id}
-                                    },
-                                },
-                            },
-                        ],
-                    "minimum_should_match": 1,
-                    },
-                },
-            }
+        query_builder = QueryBuilder()
 
-        try:
-            response = await self.elastic.search(
-                index="movies",
-                body=body,
-                )
-        except NotFoundError:
-            return 0, []
+        query_builder.should_nested(
+            path="actors",
+            field="actors.id",
+            value=person_id,
+            )
+        query_builder.should_nested(
+            path="directors",
+            field="directors.id",
+            value=person_id,
+            )
+        query_builder.should_nested(
+            path="writers",
+            field="writers.id",
+            value=person_id,
+            )
+        query = query_builder.build()
 
-        total = response["hits"]["total"]["value"]
-        films = [
-            Film(**hit["_source"])
-            for hit in response["hits"]["hits"]
-            ]
-        return total, films
+        return await super().get_list(
+            query=query,
+            page=page,
+            size=size,
+            sort=None,
+            )

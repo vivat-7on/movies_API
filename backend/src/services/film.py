@@ -7,11 +7,6 @@ from models.film import Film
 from repositories.cache.film_cache import FilmCacheRepository
 from repositories.elastic.film_elastic import FilmElasticRepository
 
-SORT_FIELDS = {
-    "imdb_rating": "imdb_rating",
-    "title": "title.raw",
-    }
-
 
 @frozen
 class FilmService:
@@ -24,7 +19,7 @@ class FilmService:
         film = await self.cache_repo.get(entity_id=film_id_str)
         if not film:
             # Если фильма нет в кеше, то ищем его в Elasticsearch
-            film = await self.elastic_repo.get_by_id(film_id=film_id_str)
+            film = await self.elastic_repo.get_by_id(entity_id=film_id_str)
             if not film:
                 # Если он отсутствует в Elasticsearch,
                 # значит, фильма вообще нет в базе
@@ -52,17 +47,8 @@ class FilmService:
         if cached is not None:
             return cached
 
-        sort_field = "imdb_rating"
-        sort_order = "desc"
-
-        if sort:
-            sort_order = "desc" if sort.startswith("-") else "asc"
-            field = sort.lstrip("-")
-            sort_field = SORT_FIELDS.get(field, "imdb_rating")
-
-        result = await self.elastic_repo.get_list(
-            sort_field=sort_field,
-            sort_order=sort_order,
+        result = await self.elastic_repo.get_films_list(
+            sort=sort,
             genre=str(genre) if genre else None,
             page=page,
             size=size,
@@ -92,7 +78,7 @@ class FilmService:
 
         try:
             result = await self.elastic_repo.search(
-                query=query,
+                text=query,
                 page=page,
                 size=size,
                 )

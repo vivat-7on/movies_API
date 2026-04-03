@@ -5,10 +5,6 @@ from models.film import Genre
 from repositories.cache.genre_cache import GenreCacheRepository
 from repositories.elastic.genre_elastic import GenreElasticRepository
 
-SORT_FIELDS = {
-    "name": "name.raw",
-    }
-
 
 @frozen
 class GenreService:
@@ -21,7 +17,7 @@ class GenreService:
         ) -> Genre | None:
         genre = await self.cache_repo.get(entity_id=genre_id)
         if not genre:
-            genre = await self.elastic_repo.get_by_id(genre_id=genre_id)
+            genre = await self.elastic_repo.get_by_id(entity_id=genre_id)
             if not genre:
                 return None
 
@@ -46,18 +42,9 @@ class GenreService:
         if cached:
             return cached
 
-        sort_field = "name.raw"
-        sort_order = "desc"
-
-        if sort:
-            sort_order = "desc" if sort.startswith("-") else "asc"
-            field = sort.lstrip("-")
-            sort_field = SORT_FIELDS.get(field, "name.raw")
-
         try:
-            result = await self.elastic_repo.get_list(
-                sort_field=sort_field,
-                sort_order=sort_order,
+            result = await self.elastic_repo.get_genres_list(
+                sort=sort,
                 search=search,
                 page=page,
                 size=size,
