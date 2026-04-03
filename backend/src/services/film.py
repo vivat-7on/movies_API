@@ -65,7 +65,7 @@ class FilmService:
         size: int,
         ) -> tuple[int, list[Film]]:
 
-        cache_key = self._build_searsh_cache_key(
+        cache_key = self._build_search_cache_key(
             query=query,
             page=page,
             size=size,
@@ -146,7 +146,7 @@ class FilmService:
             f"size={size}"
         )
 
-    def _build_searsh_cache_key(
+    def _build_search_cache_key(
         self,
         query: str,
         page: int,

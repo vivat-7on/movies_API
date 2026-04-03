@@ -6,6 +6,7 @@ from fastapi.params import Depends
 
 from api.v1.container import create_film_service
 from api.v1.dependencies.pagination import PaginationQuery
+from api.v1.sorting import FilmSortOptions
 from models.schemas import (
     FilmShort,
     FilmResponse,
@@ -78,7 +79,7 @@ async def film_details(
 @router.get('/', response_model=FilmListResponse)
 async def film_list(
     pagination: PaginationQuery = Depends(),
-    sort: str | None = Query(None),
+    sort: FilmSortOptions | None = Query(None),
     genre: UUID | None = Query(None),
     service: FilmService = Depends(create_film_service),
     ) -> FilmListResponse:

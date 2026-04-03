@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from api.v1.container import create_genre_service
 from api.v1.dependencies.pagination import PaginationQuery
+from api.v1.sorting import GenreSortOptions
 from models.schemas import GenreResponse, GenreListResponse
 from services.genre import GenreService
 
@@ -30,7 +31,7 @@ async def get_genre(
 @router.get("/", response_model=GenreListResponse)
 async def genres_list(
     pagination: PaginationQuery = Depends(),
-    sort: str | None = Query(None),
+    sort: GenreSortOptions | None = Query(None),
     search: str | None = Query(None),
     service: GenreService = Depends(create_genre_service),
     ) -> GenreListResponse:

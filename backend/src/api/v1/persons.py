@@ -5,6 +5,7 @@ from fastapi.params import Query
 
 from api.v1.container import create_person_service
 from api.v1.dependencies.pagination import PaginationQuery
+from api.v1.sorting import PersonSortOptions
 from models.schemas import (
     PersonResponse, PersonListResponse, FilmListResponse,
     FilmShort,
@@ -89,7 +90,7 @@ async def get_person(
 @router.get("/", response_model=PersonListResponse)
 async def persons_list(
     pagination: PaginationQuery = Depends(),
-    sort: str | None = Query(None),
+    sort: PersonSortOptions | None = Query(None),
     service: PersonService = Depends(create_person_service),
     ) -> PersonListResponse:
     total, persons = await service.get_list(
