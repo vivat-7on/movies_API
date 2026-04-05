@@ -1,6 +1,5 @@
 import pytest
 
-from tests.functional.fixtures.es import es_client
 from tests.functional.settings import test_settings
 from tests.functional.testdata.testdata import MAPPING_MOVIES
 
@@ -9,23 +8,23 @@ from tests.functional.testdata.testdata import MAPPING_MOVIES
     "query_data, expected_answer",
     [
         (  # есть результаты
-                {"query": "The Star"},
-                {
-                    "status": 200,
-                    "length": 50,
-                    "count": 60,
-                    },
-            ),
+            {"query": "The Star"},
+            {
+                "status": 200,
+                "length": 50,
+                "count": 60,
+            },
+        ),
         (  # нет результатов
-                {"query": "Mashed potato"},
-                {
-                    "status": 200,
-                    "length": 0,
-                    "count": 0,
-                    },
-            ),
-        ],
-    )
+            {"query": "Mashed potato"},
+            {
+                "status": 200,
+                "length": 0,
+                "count": 0,
+            },
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_films_search_by_query(
     query_data,
@@ -34,57 +33,57 @@ async def test_films_search_by_query(
     make_get_request,
     generate_movies,
     make_bulk,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
 
     # 2. Загружаем данные в ES
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
     # 3. Запрашиваем данные из ES по API
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     body, status, _ = await make_get_request(url, query_data)
 
     # 4. Проверяем ответ
-    assert status == expected_answer.get('status')
-    assert len(body["results"]) == expected_answer.get('length')
-    assert body["count"] == expected_answer.get('count')
+    assert status == expected_answer.get("status")
+    assert len(body["results"]) == expected_answer.get("length")
+    assert body["count"] == expected_answer.get("count")
 
 
 @pytest.mark.parametrize(
-    'query_data, expected_answer',
+    "query_data, expected_answer",
     [
         (  # первая страница
-                {
-                    "page_size": 20,
-                    "page_number": 1,
-                    },
-                {"length": 20},
-            ),
+            {
+                "page_size": 20,
+                "page_number": 1,
+            },
+            {"length": 20},
+        ),
         (  # вторая страница
-                {
-                    "page_size": 20,
-                    "page_number": 2,
-                    },
-                {"length": 20},
-            ),
+            {
+                "page_size": 20,
+                "page_number": 2,
+            },
+            {"length": 20},
+        ),
         (  # страница на которую не хватило данных
-                {
-                    "page_size": 20,
-                    "page_number": 99,
-                    },
-                {"length": 0},
-            ),
-        ],
-    )
+            {
+                "page_size": 20,
+                "page_number": 99,
+            },
+            {"length": 0},
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_films_search_pagination(
     es_write_data,
@@ -93,87 +92,87 @@ async def test_films_search_pagination(
     make_get_request,
     query_data,
     expected_answer,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
 
     # 2. Загружаем данные в ES
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
     # 3. Запрашиваем данные из ES по API
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {
         "query": "The Star",
-        "page_size": query_data.get('page_size'),
-        "page_number": query_data.get('page_number'),
-        }
+        "page_size": query_data.get("page_size"),
+        "page_number": query_data.get("page_number"),
+    }
 
     body, status, _ = await make_get_request(url, query)
     assert status == 200
-    assert len(body['results']) == expected_answer.get("length")
+    assert len(body["results"]) == expected_answer.get("length")
 
 
 @pytest.mark.parametrize(
-    'query_data, expected_answer',
+    "query_data, expected_answer",
     [
         (
-                {
-                    "query": "The Star",
-                    "page_size": 0,
-                    "page_number": 1,
-                    },
-                {"status": 422},
-            ),
+            {
+                "query": "The Star",
+                "page_size": 0,
+                "page_number": 1,
+            },
+            {"status": 422},
+        ),
         (
-                {
-                    "query": "The Star",
-                    "page_size": 1000,
-                    "page_number": 1,
-                    },
-                {"status": 422},
-            ),
+            {
+                "query": "The Star",
+                "page_size": 1000,
+                "page_number": 1,
+            },
+            {"status": 422},
+        ),
         (
-                {
-                    "query": "The Star",
-                    "page_size": 10,
-                    "page_number": 0,
-                    },
-                {"status": 422},
-            ),
+            {
+                "query": "The Star",
+                "page_size": 10,
+                "page_number": 0,
+            },
+            {"status": 422},
+        ),
         (
-                {
-                    "query": "",
-                    "page_size": 10,
-                    "page_number": 1,
-                    },
-                {"status": 422},
-            ),
+            {
+                "query": "",
+                "page_size": 10,
+                "page_number": 1,
+            },
+            {"status": 422},
+        ),
         (
-                {
-                    "query": "  ",
-                    "page_size": 10,
-                    "page_number": 1,
-                    },
-                {"status": 200},
-            ),
+            {
+                "query": "  ",
+                "page_size": 10,
+                "page_number": 1,
+            },
+            {"status": 200},
+        ),
         (
-                {
-                    "query": "The Star",
-                    "page_size": 10,
-                    "page_number": -1,
-                    },
-                {"status": 422},
-            ),
-        ],
-    )
+            {
+                "query": "The Star",
+                "page_size": 10,
+                "page_number": -1,
+            },
+            {"status": 422},
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_films_search_invalid_page(
     es_write_data,
@@ -183,28 +182,28 @@ async def test_films_search_invalid_page(
     es_client,
     query_data,
     expected_answer,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(10, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
 
     # 2. Загружаем данные в ES
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
     # 3. Запрашиваем данные из ES по API
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {
         "query": query_data.get("query"),
-        "page_size": query_data.get('page_size'),
-        "page_number": query_data.get('page_number'),
-        }
+        "page_size": query_data.get("page_size"),
+        "page_number": query_data.get("page_number"),
+    }
 
     body, status, _ = await make_get_request(url, query)
     assert status == expected_answer.get("status")
@@ -217,21 +216,21 @@ async def test_films_search_cache_works(
     make_bulk,
     make_get_request,
     es_client,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
     # 2. Первый запрос — прогреваем кеш
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {"query": "The Star"}
 
     body, status, _ = await make_get_request(url, query)
@@ -242,7 +241,7 @@ async def test_films_search_cache_works(
 
     # 4. Второй запрос — должен прийти из кеша
     body, status, _ = await make_get_request(url, query)
-    assert len(body['results']) == 50
+    assert len(body["results"]) == 50
 
 
 @pytest.mark.asyncio
@@ -253,21 +252,21 @@ async def test_films_search_cache_expired_or_cleared(
     make_get_request,
     es_client,
     redis_flush,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
     # 2. Первый запрос — прогреваем кеш
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {"query": "The Star"}
 
     body, status, _ = await make_get_request(url, query)
@@ -281,7 +280,7 @@ async def test_films_search_cache_expired_or_cleared(
 
     # 5. Данных нет
     body, status, _ = await make_get_request(url, query)
-    assert len(body['results']) == 0
+    assert len(body["results"]) == 0
 
 
 @pytest.mark.asyncio
@@ -291,20 +290,20 @@ async def test_films_search_cache_isolation(
     make_bulk,
     make_get_request,
     es_client,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {"query": "The Star"}
 
     # 1. Первый запрос — прогреваем кеш
@@ -319,7 +318,7 @@ async def test_films_search_cache_isolation(
     body, status, _ = await make_get_request(url, query)
 
     # кеша нет → даных нет
-    assert len(body['results']) == 0
+    assert len(body["results"]) == 0
 
 
 @pytest.mark.asyncio
@@ -329,20 +328,20 @@ async def test_films_search_cache_isolation_by_pagination(
     make_bulk,
     make_get_request,
     es_client,
-    ):
+):
     # 1. Генерируем данные для ES
     es_data = generate_movies(60, "The Star")
     bulk = make_bulk(
         docs=es_data,
         index="movies",
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=bulk,
-        )
+    )
 
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {"query": "The Star", "page_size": 10, "page_number": 1}
 
     # 1. Первый запрос — прогреваем кеш
@@ -357,16 +356,16 @@ async def test_films_search_cache_isolation_by_pagination(
     body, status, _ = await make_get_request(url, query)
 
     # кеша нет → даных нет
-    assert len(body['results']) == 0
+    assert len(body["results"]) == 0
 
 
 @pytest.mark.asyncio
 async def test_films_search_missing_query(make_get_request):
-    url = test_settings.service_url + '/api/v1/films/search'
+    url = test_settings.service_url + "/api/v1/films/search"
     query = {
         "page_size": 10,
         "page_number": 1,
-        }
+    }
 
     body, status, _ = await make_get_request(url, query)
 

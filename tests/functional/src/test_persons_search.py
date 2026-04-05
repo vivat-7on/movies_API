@@ -3,7 +3,7 @@ import pytest
 from tests.functional.settings import test_settings
 from tests.functional.testdata.testdata import MAPPING_PERSONS
 
-BASE_URL = test_settings.service_url + '/api/v1/persons/search'
+BASE_URL = test_settings.service_url + "/api/v1/persons/search"
 
 
 @pytest.mark.asyncio
@@ -12,7 +12,7 @@ async def test_persons_search_by_query(
     make_get_request,
     generate_persons,
     make_bulk,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -34,37 +34,37 @@ async def test_persons_search_by_query(
     "query_data, expected_answer",
     [
         (
-                {
-                    "page_number": 1,
-                    "page_size": 20,
-                    },
-                {
-                    "status": 200,
-                    "length": 20,
-                    },
-            ),
+            {
+                "page_number": 1,
+                "page_size": 20,
+            },
+            {
+                "status": 200,
+                "length": 20,
+            },
+        ),
         (
-                {
-                    "page_number": 2,
-                    "page_size": 20,
-                    },
-                {
-                    "status": 200,
-                    "length": 20,
-                    },
-            ),
+            {
+                "page_number": 2,
+                "page_size": 20,
+            },
+            {
+                "status": 200,
+                "length": 20,
+            },
+        ),
         (
-                {
-                    "page_number": 99,
-                    "page_size": 20,
-                    },
-                {
-                    "status": 200,
-                    "length": 0,
-                    },
-            ),
-        ],
-    )
+            {
+                "page_number": 99,
+                "page_size": 20,
+            },
+            {
+                "status": 200,
+                "length": 0,
+            },
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_persons_search_pagination(
     es_write_data,
@@ -73,7 +73,7 @@ async def test_persons_search_pagination(
     make_bulk,
     query_data,
     expected_answer,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -81,7 +81,7 @@ async def test_persons_search_pagination(
         "query": "James",
         "page_number": query_data.get("page_number"),
         "page_size": query_data.get("page_size"),
-        }
+    }
 
     body, status, _ = await make_get_request(BASE_URL, query)
     assert status == expected_answer.get("status")
@@ -95,7 +95,7 @@ async def test_persons_search_default_pagination(
     make_get_request,
     generate_persons,
     make_bulk,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -113,57 +113,57 @@ async def test_persons_search_default_pagination(
     "query_data, expected_answer",
     [
         (
-                {
-                    "query": "",
-                    "page_number": 1,
-                    "page_size": 10,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "query": "",
+                "page_number": 1,
+                "page_size": 10,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-                {
-                    "query": "James",
-                    "page_number": 0,
-                    "page_size": 10,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "query": "James",
+                "page_number": 0,
+                "page_size": 10,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-                {
-                    "query": "James",
-                    "page_number": -1,
-                    "page_size": 10,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "query": "James",
+                "page_number": -1,
+                "page_size": 10,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-                {
-                    "query": "James",
-                    "page_number": 1,
-                    "page_size": 0,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "query": "James",
+                "page_number": 1,
+                "page_size": 0,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-                {
-                    "query": "James",
-                    "page_number": 1,
-                    "page_size": 999,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
-        ],
-    )
+            {
+                "query": "James",
+                "page_number": 1,
+                "page_size": 999,
+            },
+            {
+                "status": 422,
+            },
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_persons_search_invalid_params(
     es_write_data,
@@ -172,7 +172,7 @@ async def test_persons_search_invalid_params(
     make_bulk,
     query_data,
     expected_answer,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -180,7 +180,7 @@ async def test_persons_search_invalid_params(
         "query": query_data.get("query"),
         "page_number": query_data.get("page_number"),
         "page_size": query_data.get("page_size"),
-        }
+    }
 
     body, status, _ = await make_get_request(BASE_URL, query)
     assert status == expected_answer.get("status")
@@ -192,7 +192,7 @@ async def test_persons_search_whitespace_query(
     make_get_request,
     generate_persons,
     make_bulk,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -211,7 +211,7 @@ async def test_persons_search_cache_works(
     generate_persons,
     make_bulk,
     es_client,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -240,7 +240,7 @@ async def test_persons_search_cache_cleared(
     make_bulk,
     es_client,
     redis_flush,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -270,7 +270,7 @@ async def test_persons_search_cache_isolation(
     generate_persons,
     make_bulk,
     es_client,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
@@ -306,14 +306,14 @@ async def test_persons_search_cache_isolation_by_pagination(
     generate_persons,
     make_bulk,
     es_client,
-    ):
+):
     es_data = generate_persons(count=60, name_prefix="James Carrey")
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)
     query = {
         "query": "James",
         "page_number": 1,
-        }
+    }
 
     body, status, _ = await make_get_request(BASE_URL, query)
     assert status == 200
@@ -332,7 +332,7 @@ async def test_persons_search_cache_isolation_by_pagination(
     query = {
         "query": "James",
         "page_number": 2,
-        }
+    }
 
     # Таких данных нет
     body, status, _ = await make_get_request(BASE_URL, query)
@@ -348,7 +348,7 @@ async def test_persons_search_es_down_initially(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     es_data = generate_persons(count=20)
     bulk = make_bulk(docs=es_data, index="persons")
     await es_write_data(index="persons", mapping=MAPPING_PERSONS, data=bulk)

@@ -1,6 +1,5 @@
 from attrs import frozen
 from elasticsearch import NotFoundError
-
 from models.film import Genre
 from repositories.cache.genre_cache import GenreCacheRepository
 from repositories.elastic.genre_elastic import GenreElasticRepository
@@ -14,7 +13,7 @@ class GenreService:
     async def get_by_id(
         self,
         genre_id: str,
-        ) -> Genre | None:
+    ) -> Genre | None:
         genre = await self.cache_repo.get(entity_id=genre_id)
         if not genre:
             genre = await self.elastic_repo.get_by_id(entity_id=genre_id)
@@ -31,13 +30,13 @@ class GenreService:
         search: str | None,
         page: int,
         size: int,
-        ) -> tuple[int, list[Genre]]:
+    ) -> tuple[int, list[Genre]]:
         cache_key = self._build_cache_key(
             sort=sort,
             search=search,
             page=page,
             size=size,
-            )
+        )
         cached = await self.cache_repo.get_list(cache_key)
         if cached:
             return cached
@@ -48,7 +47,7 @@ class GenreService:
                 search=search,
                 page=page,
                 size=size,
-                )
+            )
         except NotFoundError:
             cached = await self.cache_repo.get_list(cache_key)
             if cached:
@@ -65,7 +64,7 @@ class GenreService:
         search: str,
         page: int,
         size: int,
-        ) -> str:
+    ) -> str:
         return (
             "genre:list:"
             f"sort={sort or 'default'}:"

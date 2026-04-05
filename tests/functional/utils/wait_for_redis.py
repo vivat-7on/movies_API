@@ -8,7 +8,7 @@ PORT = os.getenv("REDIS_PORT", "6379")
 
 if __name__ == "__main__":
     client = redis.Redis(host=HOST, port=int(PORT), db=0)
-    for i in range(100):
+    for _ in range(100):
         try:
             client.get("ping")
             break

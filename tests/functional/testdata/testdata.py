@@ -10,35 +10,35 @@ MAPPING_MOVIES = {
                 "properties": {
                     "id": {"type": "keyword"},
                     "name": {"type": "keyword"},
-                    },
                 },
+            },
             "directors": {
                 "type": "nested",
                 "properties": {
                     "id": {"type": "keyword"},
                     "name": {"type": "keyword"},
-                    },
                 },
+            },
             "actors": {
                 "type": "nested",
                 "properties": {
                     "id": {"type": "keyword"},
                     "name": {"type": "keyword"},
-                    },
                 },
+            },
             "writers": {
                 "type": "nested",
                 "properties": {
                     "id": {"type": "keyword"},
                     "name": {"type": "keyword"},
-                    },
                 },
+            },
             "actors_names": {"type": "keyword"},
             "writers_names": {"type": "keyword"},
             "directors_names": {"type": "keyword"},
-            },
         },
-    }
+    },
+}
 
 MAPPING_GENRES = {
     "mappings": {
@@ -46,18 +46,18 @@ MAPPING_GENRES = {
         "properties": {
             "id": {
                 "type": "keyword",
-                },
+            },
             "name": {
                 "type": "text",
                 "fields": {
                     "raw": {
                         "type": "keyword",
-                        },
                     },
                 },
             },
         },
-    }
+    },
+}
 
 MAPPING_PERSONS = {
     "mappings": {
@@ -65,15 +65,15 @@ MAPPING_PERSONS = {
         "properties": {
             "id": {
                 "type": "keyword",
-                },
+            },
             "name": {
                 "type": "text",
                 "fields": {
                     "raw": {
                         "type": "keyword",
-                        },
                     },
                 },
             },
         },
-    }
+    },
+}

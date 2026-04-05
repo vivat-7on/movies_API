@@ -6,4 +6,4 @@ def transform_genre(genre: GenreDTO) -> EsGenre:
     return EsGenre(
         id=genre.id,
         name=genre.name,
-        )
+    )

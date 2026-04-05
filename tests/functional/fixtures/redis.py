@@ -9,7 +9,7 @@ async def redis_client():
     client = redis.Redis(
         host=test_settings.redis_host,
         port=test_settings.redis_port,
-        )
+    )
     yield client
     await client.aclose()
 

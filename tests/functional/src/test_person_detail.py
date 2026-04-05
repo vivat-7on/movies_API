@@ -14,22 +14,22 @@ async def test_person_detail_success(
     make_bulk,
     es_write_data,
     make_get_request,
-    ):
+):
     es_data = generate_persons(
         count=1,
         person_id=PERSON_ID,
         name_prefix="Test Actor",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="persons",
-        )
+    )
     await es_write_data(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(PERSON_ID)
+    )
+    url = test_settings.service_url + "/api/v1/persons/{}".format(PERSON_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -42,8 +42,8 @@ async def test_person_detail_success(
 @pytest.mark.asyncio
 async def test_person_detail_not_found(
     make_get_request,
-    ):
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(PERSON_ID)
+):
+    url = test_settings.service_url + "/api/v1/persons/{}".format(PERSON_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -53,11 +53,11 @@ async def test_person_detail_not_found(
 @pytest.mark.asyncio
 async def test_person_detail_invalid_uuid(
     make_get_request,
-    ):
+):
     invalid_person_uuid = "invalid_uuid"
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(
+    url = test_settings.service_url + "/api/v1/persons/{}".format(
         invalid_person_uuid,
-        )
+    )
 
     body, status, _ = await make_get_request(url, {})
     assert status == 422
@@ -70,22 +70,22 @@ async def test_person_detail_cache_works(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     es_data = generate_persons(
         count=1,
         person_id=PERSON_ID,
         name_prefix="Test Actor",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="persons",
-        )
+    )
     await es_write_data(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(PERSON_ID)
+    )
+    url = test_settings.service_url + "/api/v1/persons/{}".format(PERSON_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -113,22 +113,22 @@ async def test_person_detail_cache_cleared_and_es_down(
     make_get_request,
     es_client,
     redis_flush,
-    ):
+):
     es_data = generate_persons(
         count=1,
         person_id=PERSON_ID,
         name_prefix="Test Actor",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="persons",
-        )
+    )
     await es_write_data(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(PERSON_ID)
+    )
+    url = test_settings.service_url + "/api/v1/persons/{}".format(PERSON_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -155,30 +155,30 @@ async def test_person_detail_cache_isolation(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     person_id2 = str(uuid.uuid4())
     es_data = generate_persons(
         count=1,
         person_id=PERSON_ID,
         name_prefix="Test Actor",
-        )
+    )
     es_data.extend(
         generate_persons(
             count=1,
             person_id=person_id2,
             name_prefix="Second Test Actor",
-            ),
-        )
+        ),
+    )
     bulk = make_bulk(
         docs=es_data,
         index="persons",
-        )
+    )
     await es_write_data(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(PERSON_ID)
+    )
+    url = test_settings.service_url + "/api/v1/persons/{}".format(PERSON_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -198,7 +198,7 @@ async def test_person_detail_cache_isolation(
     assert body["name"].startswith("Test Actor")
 
     # Данных нет
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(person_id2)
+    url = test_settings.service_url + "/api/v1/persons/{}".format(person_id2)
     body, status, _ = await make_get_request(url, query)
     assert status == 404
 
@@ -210,26 +210,26 @@ async def test_person_detail_es_down_initially(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     es_data = generate_persons(
         count=1,
         person_id=PERSON_ID,
         name_prefix="Test Actor",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="persons",
-        )
+    )
     await es_write_data(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=bulk,
-        )
+    )
 
     # убили ES ДО первого запроса
     await es_client.indices.delete(index="persons")
 
-    url = test_settings.service_url + '/api/v1/persons/{}'.format(PERSON_ID)
+    url = test_settings.service_url + "/api/v1/persons/{}".format(PERSON_ID)
     query = {}
     body, status, _ = await make_get_request(url, query)
     assert status == 404

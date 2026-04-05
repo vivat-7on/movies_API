@@ -12,17 +12,17 @@ class QueryBuilder:
         path: str,
         field: str,
         value: str,
-        ) -> "QueryBuilder":
+    ) -> "QueryBuilder":
         self._filters.append(
             {
                 "nested": {
                     "path": path,
                     "query": {
                         "term": {field: value},
-                        },
                     },
                 },
-            )
+            },
+        )
         return self
 
     def should_nested(
@@ -30,17 +30,17 @@ class QueryBuilder:
         path: str,
         field: str,
         value: str,
-        ) -> "QueryBuilder":
+    ) -> "QueryBuilder":
         self._should.append(
             {
                 "nested": {
                     "path": path,
                     "query": {
                         "term": {field: value},
-                        },
                     },
                 },
-            )
+            },
+        )
         return self
 
     def match(
@@ -48,17 +48,17 @@ class QueryBuilder:
         field: str,
         value: str,
         operator: str = "and",
-        ) -> "QueryBuilder":
+    ) -> "QueryBuilder":
         self._filters.append(
             {
                 "match": {
                     field: {
                         "query": value,
                         "operator": operator,
-                        },
                     },
-                }
-            )
+                },
+            }
+        )
         return self
 
     def build(self) -> dict:
@@ -68,20 +68,20 @@ class QueryBuilder:
                     "filter": self._filters,
                     "should": self._should,
                     "minimum_should_match": 1,
-                    },
-                }
+                },
+            }
         if self._filters:
             return {
                 "bool": {
                     "filter": self._filters,
-                    },
-                }
+                },
+            }
         if self._should:
             return {
                 "bool": {
                     "should": self._should,
                     "minimum_should_match": 1,
-                    },
-                }
+                },
+            }
 
         return {"match_all": {}}

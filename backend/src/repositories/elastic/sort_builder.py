@@ -8,8 +8,7 @@ class SortBuilder:
         field: str,
         order: str = "asc",
         missing: str = "_last",
-        ) -> "SortBuilder":
-
+    ) -> "SortBuilder":
         if field not in self._allowed_fields:
             raise ValueError(f"Field {field} not in allowed fields")
 
@@ -21,9 +20,9 @@ class SortBuilder:
                 field: {
                     "order": order,
                     "missing": missing,
-                    },
                 },
-            )
+            },
+        )
         return self
 
     def build(self) -> list[dict] | None:

@@ -1,5 +1,6 @@
-from redis.asyncio import Redis
 from models.film import Film
+from redis.asyncio import Redis
+
 from repositories.cache.base import BaseCacheRepository
 
 
@@ -9,4 +10,4 @@ class FilmCacheRepository(BaseCacheRepository[Film]):
             redis,
             model=Film,
             key_prefix="film",
-            )
+        )

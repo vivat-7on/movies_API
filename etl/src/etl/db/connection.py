@@ -1,6 +1,5 @@
 import psycopg2
 from psycopg2.extensions import connection as PgConnection
-
 from src.etl.db.settings import DBSettings
 
 

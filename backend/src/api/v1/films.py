@@ -3,33 +3,33 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.params import Depends
+from models.schemas import (
+    FilmListResponse,
+    FilmResponse,
+    FilmShort,
+    GenreResponse,
+    PersonsResponse,
+)
+from services.film import FilmService
 
 from api.v1.container import create_film_service
 from api.v1.dependencies.pagination import PaginationQuery
 from api.v1.sorting import FilmSortOptions
-from models.schemas import (
-    FilmShort,
-    FilmResponse,
-    GenreResponse,
-    PersonsResponse,
-    FilmListResponse,
-    )
-from services.film import FilmService
 
 router = APIRouter()
 
 
-@router.get('/search', response_model=FilmListResponse)
+@router.get("/search", response_model=FilmListResponse)
 async def films_search(
     query: str = Query(..., min_length=1),
     pagination: PaginationQuery = Depends(),
     service: FilmService = Depends(create_film_service),
-    ) -> FilmListResponse:
+) -> FilmListResponse:
     total, films = await service.search(
         query=query,
         page=pagination.page_number,
         size=pagination.page_size,
-        )
+    )
     return FilmListResponse(
         count=total,
         page_number=pagination.page_number,
@@ -39,56 +39,48 @@ async def films_search(
                 uuid=film.id,
                 title=film.title,
                 imdb_rating=film.imdb_rating,
-                ) for film in films
-            ],
-        )
+            )
+            for film in films
+        ],
+    )
 
 
-@router.get('/{film_id}', response_model=FilmResponse)
+@router.get("/{film_id}", response_model=FilmResponse)
 async def film_details(
     film_id: UUID,
     service: FilmService = Depends(create_film_service),
-    ) -> FilmResponse:
+) -> FilmResponse:
     film = await service.get_by_id(film_id=film_id)
     if not film:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail=f"Film with id={film_id} not found",
-            )
+        )
     return FilmResponse(
         uuid=film.id,
         imdb_rating=film.imdb_rating,
         genres=[GenreResponse(uuid=g.id, name=g.name) for g in film.genres],
         title=film.title,
         description=film.description,
-        directors=[
-            PersonsResponse(uuid=d.id, name=d.name)
-            for d in film.directors
-            ],
-        actors=[
-            PersonsResponse(uuid=a.id, name=a.name)
-            for a in film.actors
-            ],
-        writers=[
-            PersonsResponse(uuid=w.id, name=w.name)
-            for w in film.writers
-            ],
-        )
+        directors=[PersonsResponse(uuid=d.id, name=d.name) for d in film.directors],
+        actors=[PersonsResponse(uuid=a.id, name=a.name) for a in film.actors],
+        writers=[PersonsResponse(uuid=w.id, name=w.name) for w in film.writers],
+    )
 
 
-@router.get('/', response_model=FilmListResponse)
+@router.get("/", response_model=FilmListResponse)
 async def film_list(
     pagination: PaginationQuery = Depends(),
     sort: FilmSortOptions | None = Query(None),
     genre: UUID | None = Query(None),
     service: FilmService = Depends(create_film_service),
-    ) -> FilmListResponse:
+) -> FilmListResponse:
     total, films = await service.get_list(
         sort=sort,
         genre=genre,
         page=pagination.page_number,
         size=pagination.page_size,
-        )
+    )
     return FilmListResponse(
         count=total,
         page_number=pagination.page_number,
@@ -98,6 +90,7 @@ async def film_list(
                 uuid=film.id,
                 title=film.title,
                 imdb_rating=film.imdb_rating,
-                ) for film in films
-            ],
-        )
+            )
+            for film in films
+        ],
+    )

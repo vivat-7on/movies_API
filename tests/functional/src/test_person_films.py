@@ -15,7 +15,7 @@ async def test_persons_film_success(
     generate_persons,
     make_get_request,
     role,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -23,14 +23,14 @@ async def test_persons_film_success(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=5,
         role=role,
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -40,12 +40,12 @@ async def test_persons_film_success(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 
@@ -66,7 +66,7 @@ async def test_persons_film_empty(
     make_bulk,
     generate_persons,
     make_get_request,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # есть person, но нет фильмов
@@ -74,13 +74,13 @@ async def test_persons_film_empty(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
     persons_bulk = make_bulk(docs=persons, index="persons")
     await es_write_data(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 
@@ -104,7 +104,7 @@ async def test_persons_film_invalid_uuid(make_get_request):
 @pytest.mark.asyncio
 async def test_persons_film_person_not_found(
     make_get_request,
-    ):
+):
     person_id = "55fc8aef-bed3-4801-863c-14f1917e9851"
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 
@@ -116,46 +116,43 @@ async def test_persons_film_person_not_found(
     "query_data, expected_answer",
     [
         (
-
-                {
-                    "page_number": 1,
-                    "page_size": 5,
-                    },
-                {
-                    "status": 200,
-                    "page_number": 1,
-                    "page_size": 5,
-                    "length": 5,
-                    },
-            ),
+            {
+                "page_number": 1,
+                "page_size": 5,
+            },
+            {
+                "status": 200,
+                "page_number": 1,
+                "page_size": 5,
+                "length": 5,
+            },
+        ),
         (
-
-                {
-                    "page_number": 2,
-                    "page_size": 5,
-                    },
-                {
-                    "status": 200,
-                    "page_number": 2,
-                    "page_size": 5,
-                    "length": 5,
-                    },
-            ),
+            {
+                "page_number": 2,
+                "page_size": 5,
+            },
+            {
+                "status": 200,
+                "page_number": 2,
+                "page_size": 5,
+                "length": 5,
+            },
+        ),
         (
-
-                {
-                    "page_number": 3,
-                    "page_size": 5,
-                    },
-                {
-                    "status": 200,
-                    "page_number": 3,
-                    "page_size": 5,
-                    "length": 0,
-                    },
-            ),
-        ],
-    )
+            {
+                "page_number": 3,
+                "page_size": 5,
+            },
+            {
+                "status": 200,
+                "page_number": 3,
+                "page_size": 5,
+                "length": 0,
+            },
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_persons_film_pagination(
     es_write_data,
@@ -165,7 +162,7 @@ async def test_persons_film_pagination(
     make_get_request,
     query_data,
     expected_answer,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -173,14 +170,14 @@ async def test_persons_film_pagination(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=10,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -190,18 +187,18 @@ async def test_persons_film_pagination(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
     query = {
         "page_number": query_data.get("page_number"),
         "page_size": query_data.get("page_size"),
-        }
+    }
 
     body, status, _ = await make_get_request(url, query)
     assert status == expected_answer.get("status")
@@ -218,7 +215,7 @@ async def test_persons_film_default_pagination(
     make_bulk,
     generate_persons,
     make_get_request,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -226,14 +223,14 @@ async def test_persons_film_default_pagination(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=60,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -243,12 +240,12 @@ async def test_persons_film_default_pagination(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 
@@ -263,47 +260,43 @@ async def test_persons_film_default_pagination(
     "query_data, expected_answer",
     [
         (
-
-                {
-                    "page_number": 0,
-                    "page_size": 5,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "page_number": 0,
+                "page_size": 5,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-
-                {
-                    "page_number": -1,
-                    "page_size": 5,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "page_number": -1,
+                "page_size": 5,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-
-                {
-                    "page_number": 1,
-                    "page_size": 0,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
+            {
+                "page_number": 1,
+                "page_size": 0,
+            },
+            {
+                "status": 422,
+            },
+        ),
         (
-
-                {
-                    "page_number": 1,
-                    "page_size": 999,
-                    },
-                {
-                    "status": 422,
-                    },
-            ),
-        ],
-    )
+            {
+                "page_number": 1,
+                "page_size": 999,
+            },
+            {
+                "status": 422,
+            },
+        ),
+    ],
+)
 @pytest.mark.asyncio
 async def test_persons_film_invalid_pagination(
     es_write_data,
@@ -313,7 +306,7 @@ async def test_persons_film_invalid_pagination(
     make_get_request,
     query_data,
     expected_answer,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -321,14 +314,14 @@ async def test_persons_film_invalid_pagination(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=60,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -338,18 +331,18 @@ async def test_persons_film_invalid_pagination(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
     query = {
         "page_number": query_data.get("page_number"),
         "page_size": query_data.get("page_size"),
-        }
+    }
 
     body, status, _ = await make_get_request(url, query)
     assert status == expected_answer.get("status")
@@ -363,7 +356,7 @@ async def test_persons_film_cache_works(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -371,14 +364,14 @@ async def test_persons_film_cache_works(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=5,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -388,12 +381,12 @@ async def test_persons_film_cache_works(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 
@@ -427,7 +420,7 @@ async def test_persons_film_cache_cleared(
     make_get_request,
     es_client,
     redis_flush,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -435,14 +428,14 @@ async def test_persons_film_cache_cleared(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=5,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -452,12 +445,12 @@ async def test_persons_film_cache_cleared(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 
@@ -492,7 +485,7 @@ async def test_persons_film_cache_isolation_by_pagination(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     person_id = str(uuid.uuid4())
 
     # Создаём person
@@ -500,14 +493,14 @@ async def test_persons_film_cache_isolation_by_pagination(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=20,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -517,18 +510,18 @@ async def test_persons_film_cache_isolation_by_pagination(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
     query = {
         "page_number": 1,
         "page_size": 10,
-        }
+    }
 
     body, status, _ = await make_get_request(url, query)
     assert status == 200
@@ -547,7 +540,7 @@ async def test_persons_film_cache_isolation_by_pagination(
     query = {
         "page_number": 2,
         "page_size": 10,
-        }
+    }
 
     body, status, _ = await make_get_request(url, query)
 
@@ -565,7 +558,7 @@ async def test_persons_film_cache_isolation_by_person(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     person_id = str(uuid.uuid4())
     person_id2 = str(uuid.uuid4())
 
@@ -574,22 +567,22 @@ async def test_persons_film_cache_isolation_by_person(
         count=1,
         person_id=person_id,
         name_prefix="Test Person",
-        )
+    )
 
     persons.extend(
         generate_persons(
             count=1,
             person_id=person_id2,
             name_prefix="Second Test Person",
-            ),
-        )
+        ),
+    )
 
     # Создаём фильмы с этим person
     movies = generate_movies_with_person(
         person_id=person_id,
         count=5,
         role="actor",
-        )
+    )
 
     persons_bulk = make_bulk(docs=persons, index="persons")
     movies_bulk = make_bulk(docs=movies, index="movies")
@@ -599,12 +592,12 @@ async def test_persons_film_cache_isolation_by_person(
         index="persons",
         mapping=MAPPING_PERSONS,
         data=persons_bulk,
-        )
+    )
     await es_write_data(
         index="movies",
         mapping=MAPPING_MOVIES,
         data=movies_bulk,
-        )
+    )
 
     url = test_settings.service_url + f"/api/v1/persons/{person_id}/film"
 

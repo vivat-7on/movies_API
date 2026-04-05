@@ -1,5 +1,5 @@
 import json
-from typing import TypeVar, Generic, Type
+from typing import Generic, Type, TypeVar
 
 from redis.asyncio import Redis
 
@@ -15,7 +15,7 @@ class BaseCacheRepository(Generic[T]):
         model: Type[T],
         key_prefix: str,
         id_field: str = "id",
-        ) -> None:
+    ) -> None:
         self.redis = redis
         self.model = model
         self.key_prefix = key_prefix
@@ -38,12 +38,12 @@ class BaseCacheRepository(Generic[T]):
         if entity_id is None:
             raise AttributeError(
                 f"{self.model.__name__} has no field {self.id_field}",
-                )
+            )
         await self.redis.set(
             f"{self.key_prefix}:{entity_id}",
             data.model_dump_json(),
             CACHE_TTL,
-            )
+        )
 
     async def get_list(self, key: str) -> tuple[int, list[T]] | None:
         data = await self.redis.get(key)
@@ -63,10 +63,10 @@ class BaseCacheRepository(Generic[T]):
         key: str,
         value: tuple[int, list[T]],
         ttl: int = LIST_CACHE_TTL,
-        ) -> None:
+    ) -> None:
         total, results = value
         payload = {
             "total": total,
             "results": [r.model_dump() for r in results],
-            }
+        }
         await self.redis.set(key, json.dumps(payload), ttl)

@@ -6,14 +6,15 @@ logger = logging.getLogger(__name__)
 
 
 def backoff(
-        start_sleep_time: float = 0.1,
-        factor: int = 2,
-        border_sleep_time: int = 10,
-        max_tries: int = 8,
-        exceptions: tuple[type[Exception], ...] = (Exception,),
+    start_sleep_time: float = 0.1,
+    factor: int = 2,
+    border_sleep_time: int = 10,
+    max_tries: int = 8,
+    exceptions: tuple[type[Exception], ...] = (Exception,),
 ):
     """
-    Функция для повторного выполнения функции через некоторое время, если возникла ошибка.
+    Функция для повторного выполнения функции через некоторое время,
+    если возникла ошибка.
     Использует наивный экспоненциальный рост времени повтора (factor)
     до граничного времени ожидания (border_sleep_time)
 
@@ -21,12 +22,14 @@ def backoff(
         t = start_sleep_time * (factor ^ n), если t < border_sleep_time
         t = border_sleep_time, иначе
     :param start_sleep_time: начальное время ожидания
-    :param factor: во сколько раз нужно увеличивать время ожидания на каждой итерации
+    :param factor: во сколько раз нужно увеличивать
+    время ожидания на каждой итерации
     :param border_sleep_time: максимальное время ожидания
     :param max_tries: количество попыток перезапустить функцию
     :param exceptions кортеж перехватываемых исключений
     :return: результат выполнения функции
     """
+
     def func_wrapper(func):
         @wraps(func)
         def inner(*args, **kwargs):
@@ -43,7 +46,7 @@ def backoff(
                         )
                         raise
                     sleep_time = min(
-                        start_sleep_time * (factor ** attempt),
+                        start_sleep_time * (factor**attempt),
                         border_sleep_time,
                     )
                     logger.warning(
@@ -57,6 +60,7 @@ def backoff(
                     )
                     sleep(sleep_time)
                     attempt += 1
+
         return inner
 
     return func_wrapper

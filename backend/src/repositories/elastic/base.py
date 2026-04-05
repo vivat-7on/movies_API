@@ -1,4 +1,4 @@
-from typing import TypeVar, Generic, Type
+from typing import Generic, Type, TypeVar
 
 from elasticsearch import AsyncElasticsearch, NotFoundError
 
@@ -11,7 +11,7 @@ class BaseElasticRepository(Generic[T]):
         elastic: AsyncElasticsearch,
         index: str,
         model: Type[T],
-        ) -> None:
+    ) -> None:
         self.elastic = elastic
         self.index = index
         self.model = model
@@ -21,7 +21,7 @@ class BaseElasticRepository(Generic[T]):
             doc = await self.elastic.get(index=self.index, id=entity_id)
         except NotFoundError:
             return None
-        return self.model(**doc['_source'])
+        return self.model(**doc["_source"])
 
     async def get_list(
         self,
@@ -29,7 +29,7 @@ class BaseElasticRepository(Generic[T]):
         page: int,
         size: int,
         sort: list | None,
-        ) -> tuple[int, list[T]]:
+    ) -> tuple[int, list[T]]:
         offset = self._get_offset(page, size)
 
         params = {
@@ -37,7 +37,7 @@ class BaseElasticRepository(Generic[T]):
             "query": query,
             "from_": offset,
             "size": size,
-            }
+        }
 
         if sort:
             params["sort"] = sort  # type: ignore
@@ -53,10 +53,7 @@ class BaseElasticRepository(Generic[T]):
         hits = response.get("hits", {})
         total = hits.get("total", {}).get("value", 0)
 
-        films = [
-            self.model(**hit["_source"])
-            for hit in hits.get("hits", [])
-            ]
+        films = [self.model(**hit["_source"]) for hit in hits.get("hits", [])]
         return total, films
 
     def _get_offset(self, page: int, size: int) -> int:

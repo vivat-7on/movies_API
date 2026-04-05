@@ -1,6 +1,6 @@
+from models.film import Person
 from redis.asyncio import Redis
 
-from models.film import Person
 from repositories.cache.base import BaseCacheRepository
 
 
@@ -10,4 +10,4 @@ class PersonCacheRepository(BaseCacheRepository[Person]):
             redis,
             model=Person,
             key_prefix="person",
-            )
+        )

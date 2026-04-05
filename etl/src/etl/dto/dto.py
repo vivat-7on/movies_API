@@ -2,10 +2,12 @@ import datetime
 import uuid
 from dataclasses import dataclass
 
+
 @dataclass
 class PersonDTO:
     id: uuid.UUID
     full_name: str
+
 
 @dataclass
 class FilmPersonDTO:
@@ -13,10 +15,12 @@ class FilmPersonDTO:
     full_name: str
     role: str | None
 
+
 @dataclass
 class GenreDTO:
     id: uuid.UUID
     name: str
+
 
 @dataclass
 class FilmWorkDTO:
@@ -27,6 +31,7 @@ class FilmWorkDTO:
     persons: list[FilmPersonDTO]
     genres: list[GenreDTO]
     updated_at: datetime.datetime | None
+
 
 @dataclass
 class MovieState:

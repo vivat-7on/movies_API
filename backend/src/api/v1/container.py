@@ -1,9 +1,8 @@
+from db.elastic import get_elastic
+from db.redis import get_redis
 from elasticsearch import AsyncElasticsearch
 from fastapi.params import Depends
 from redis.asyncio import Redis
-
-from db.elastic import get_elastic
-from db.redis import get_redis
 from repositories.cache.film_cache import FilmCacheRepository
 from repositories.cache.genre_cache import GenreCacheRepository
 from repositories.cache.person_cache import PersonCacheRepository
@@ -17,73 +16,73 @@ from services.person import PersonService
 
 def create_film_elastic_repository(
     elastic: AsyncElasticsearch = Depends(get_elastic),
-    ) -> FilmElasticRepository:
+) -> FilmElasticRepository:
     return FilmElasticRepository(elastic=elastic)
 
 
 def create_film_cache_repository(
     redis: Redis = Depends(get_redis),
-    ) -> FilmCacheRepository:
+) -> FilmCacheRepository:
     return FilmCacheRepository(redis=redis)
 
 
 def create_film_service(
     elastic_repo: FilmElasticRepository = Depends(
         create_film_elastic_repository,
-        ),
+    ),
     cache_repo: FilmCacheRepository = Depends(create_film_cache_repository),
-    ) -> FilmService:
+) -> FilmService:
     return FilmService(
         elastic_repo=elastic_repo,
         cache_repo=cache_repo,
-        )
+    )
 
 
 def create_genre_elastic_repository(
     elastic: AsyncElasticsearch = Depends(get_elastic),
-    ) -> GenreElasticRepository:
+) -> GenreElasticRepository:
     return GenreElasticRepository(elastic=elastic)
 
 
 def create_genre_cache_repository(
     redis: Redis = Depends(get_redis),
-    ) -> GenreCacheRepository:
+) -> GenreCacheRepository:
     return GenreCacheRepository(redis=redis)
 
 
 def create_genre_service(
     elastic_repo: GenreElasticRepository = Depends(
         create_genre_elastic_repository,
-        ),
+    ),
     cache_repo: GenreCacheRepository = Depends(create_genre_cache_repository),
-    ) -> GenreService:
+) -> GenreService:
     return GenreService(
         elastic_repo=elastic_repo,
         cache_repo=cache_repo,
-        )
+    )
 
 
 def create_person_elastic_repository(
     elastic: AsyncElasticsearch = Depends(get_elastic),
-    ) -> PersonElasticRepository:
+) -> PersonElasticRepository:
     return PersonElasticRepository(elastic=elastic)
 
 
 def create_person_cache_repository(
     redis: Redis = Depends(get_redis),
-    ) -> PersonCacheRepository:
+) -> PersonCacheRepository:
     return PersonCacheRepository(redis=redis)
 
 
 def create_person_service(
     elastic_repo: PersonElasticRepository = Depends(
         create_person_elastic_repository,
-        ),
+    ),
     cache_repo: PersonCacheRepository = Depends(create_person_cache_repository),
     film_service: FilmService = Depends(create_film_service),
-    ) -> PersonService:
+) -> PersonService:
     return PersonService(
         elastic_repo=elastic_repo,
         cache_repo=cache_repo,
         film_service=film_service,
-        )
+    )

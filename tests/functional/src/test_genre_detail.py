@@ -14,22 +14,22 @@ async def test_genre_detail_success(
     make_bulk,
     es_write_data,
     make_get_request,
-    ):
+):
     es_data = generate_genres(
         count=1,
         genre_id=GENRE_ID,
         name_prefix="Action",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="genres",
-        )
+    )
     await es_write_data(
         index="genres",
         mapping=MAPPING_GENRES,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(GENRE_ID)
+    )
+    url = test_settings.service_url + "/api/v1/genres/{}".format(GENRE_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -42,8 +42,8 @@ async def test_genre_detail_success(
 @pytest.mark.asyncio
 async def test_genre_detail_not_found(
     make_get_request,
-    ):
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(GENRE_ID)
+):
+    url = test_settings.service_url + "/api/v1/genres/{}".format(GENRE_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -53,11 +53,11 @@ async def test_genre_detail_not_found(
 @pytest.mark.asyncio
 async def test_genre_detail_invalid_uuid(
     make_get_request,
-    ):
+):
     invalid_genre_id = "invalid-uuid"
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(
+    url = test_settings.service_url + "/api/v1/genres/{}".format(
         invalid_genre_id,
-        )
+    )
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -71,22 +71,22 @@ async def test_genre_detail_cache_works(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     es_data = generate_genres(
         count=1,
         genre_id=GENRE_ID,
         name_prefix="Action",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="genres",
-        )
+    )
     await es_write_data(
         index="genres",
         mapping=MAPPING_GENRES,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(GENRE_ID)
+    )
+    url = test_settings.service_url + "/api/v1/genres/{}".format(GENRE_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -114,22 +114,22 @@ async def test_genre_detail_cache_cleared_and_es_down(
     make_get_request,
     es_client,
     redis_flush,
-    ):
+):
     es_data = generate_genres(
         count=1,
         genre_id=GENRE_ID,
         name_prefix="Action",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="genres",
-        )
+    )
     await es_write_data(
         index="genres",
         mapping=MAPPING_GENRES,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(GENRE_ID)
+    )
+    url = test_settings.service_url + "/api/v1/genres/{}".format(GENRE_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -156,23 +156,23 @@ async def test_genre_detail_cache_isolation(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     search_genre_id = "b8c98290-bb2e-4563-aae6-6feff49f7d70"
     es_data = generate_genres(
         count=1,
         genre_id=GENRE_ID,
         name_prefix="Action",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="genres",
-        )
+    )
     await es_write_data(
         index="genres",
         mapping=MAPPING_GENRES,
         data=bulk,
-        )
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(GENRE_ID)
+    )
+    url = test_settings.service_url + "/api/v1/genres/{}".format(GENRE_ID)
     query = {}
 
     body, status, _ = await make_get_request(url, query)
@@ -185,9 +185,9 @@ async def test_genre_detail_cache_isolation(
     await es_client.indices.delete(index="genres")
 
     # Таких данных в кеше быть не должно
-    url = test_settings.service_url + '/api/v1/genres/{}'.format(
+    url = test_settings.service_url + "/api/v1/genres/{}".format(
         search_genre_id,
-        )
+    )
     body, status, _ = await make_get_request(url, query)
     assert status == 404
 
@@ -199,26 +199,26 @@ async def test_genre_detail_es_down_initially(
     es_write_data,
     make_get_request,
     es_client,
-    ):
+):
     es_data = generate_genres(
         count=1,
         genre_id=GENRE_ID,
         name_prefix="Action",
-        )
+    )
     bulk = make_bulk(
         docs=es_data,
         index="genres",
-        )
+    )
     await es_write_data(
         index="genres",
         mapping=MAPPING_GENRES,
         data=bulk,
-        )
+    )
 
     # убили ES ДО первого запроса
     await es_client.indices.delete(index="genres")
 
-    url = test_settings.service_url + f'/api/v1/genres/{GENRE_ID}'
+    url = test_settings.service_url + f"/api/v1/genres/{GENRE_ID}"
     body, status, _ = await make_get_request(url, {})
 
     assert status == 404

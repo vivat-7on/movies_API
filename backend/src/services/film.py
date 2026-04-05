@@ -2,7 +2,6 @@ from uuid import UUID
 
 from attrs import frozen
 from elasticsearch import NotFoundError
-
 from models.film import Film
 from repositories.cache.film_cache import FilmCacheRepository
 from repositories.elastic.film_elastic import FilmElasticRepository
@@ -35,14 +34,13 @@ class FilmService:
         genre: UUID | None,
         page: int,
         size: int,
-        ) -> tuple[int, list[Film]]:
-
+    ) -> tuple[int, list[Film]]:
         cache_key = self._build_list_cache_key(
             sort=sort,
             genre=str(genre) if genre else None,
             page=page,
             size=size,
-            )
+        )
         cached = await self.cache_repo.get_list(cache_key)
         if cached is not None:
             return cached
@@ -52,7 +50,7 @@ class FilmService:
             genre=str(genre) if genre else None,
             page=page,
             size=size,
-            )
+        )
 
         await self.cache_repo.put_list(cache_key, result)
 
@@ -63,13 +61,12 @@ class FilmService:
         query: str,
         page: int,
         size: int,
-        ) -> tuple[int, list[Film]]:
-
+    ) -> tuple[int, list[Film]]:
         cache_key = self._build_search_cache_key(
             query=query,
             page=page,
             size=size,
-            )
+        )
 
         cached = await self.cache_repo.get_list(cache_key)
 
@@ -81,7 +78,7 @@ class FilmService:
                 text=query,
                 page=page,
                 size=size,
-                )
+            )
         except NotFoundError:
             cached = await self.cache_repo.get_list(cache_key)
             if cached is not None:
@@ -92,7 +89,7 @@ class FilmService:
             key=cache_key,
             value=result,
             ttl=60,
-            )
+        )
 
         return result
 
@@ -101,14 +98,14 @@ class FilmService:
         person_id: UUID,
         page: int,
         size: int,
-        ) -> tuple[int, list[Film]]:
+    ) -> tuple[int, list[Film]]:
         person_id_str = str(person_id)
 
         cache_key = self._build_person_cache_key(
             person_id=person_id_str,
             page=page,
             size=size,
-            )
+        )
 
         cached = await self.cache_repo.get_list(cache_key)
 
@@ -120,7 +117,7 @@ class FilmService:
                 person_id=person_id_str,
                 page=page,
                 size=size,
-                )
+            )
         except NotFoundError:
             cached = await self.cache_repo.get_list(cache_key)
             if cached is not None:
@@ -137,7 +134,7 @@ class FilmService:
         genre: str,
         page: int,
         size: int,
-        ) -> str:
+    ) -> str:
         return (
             "films:list:"
             f"sort={sort or 'default'}:"
@@ -151,24 +148,14 @@ class FilmService:
         query: str,
         page: int,
         size: int,
-        ) -> str:
+    ) -> str:
         query = " ".join(query.strip().lower().split())
-        return (
-            "films:search:"
-            f"query={query or 'default'}:"
-            f"page={page}:"
-            f"size={size}"
-        )
+        return f"films:search:query={query or 'default'}:page={page}:size={size}"
 
     def _build_person_cache_key(
         self,
         person_id: str,
         page: int,
         size: int,
-        ) -> str:
-        return (
-            "films:person:"
-            f"person_id={person_id}:"
-            f"page={page}:"
-            f"size={size}"
-        )
+    ) -> str:
+        return f"films:person:person_id={person_id}:page={page}:size={size}"
