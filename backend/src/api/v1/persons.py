@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from auth.api import PaginationQuery, PersonSortOptions, create_person_service
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.params import Query
 from models.schemas import (
@@ -9,10 +10,6 @@ from models.schemas import (
     PersonResponse,
 )
 from services.person import PersonService
-
-from api.v1.container import create_person_service
-from api.v1.dependencies.pagination import PaginationQuery
-from api.v1.sorting import PersonSortOptions
 
 router = APIRouter()
 

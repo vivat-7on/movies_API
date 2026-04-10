@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from uuid import UUID
 
+from auth.api import FilmSortOptions, PaginationQuery, create_film_service
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.params import Depends
 from models.schemas import (
@@ -11,10 +12,6 @@ from models.schemas import (
     PersonsResponse,
 )
 from services.film import FilmService
-
-from api.v1.container import create_film_service
-from api.v1.dependencies.pagination import PaginationQuery
-from api.v1.sorting import FilmSortOptions
 
 router = APIRouter()
 

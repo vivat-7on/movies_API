@@ -7,16 +7,17 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
-from src.core.config import get_settings
-from src.db.postgres import Base
+
+from auth.api.v1.dependencies import get_db_settings
+from auth.db.postgres import Base
 
 sys.path.append(str(Path(__file__).resolve().parents[2]))
-settings = get_settings()
+settings = get_db_settings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.sync_url)
+config.set_main_option("sqlalchemy.url", settings.async_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

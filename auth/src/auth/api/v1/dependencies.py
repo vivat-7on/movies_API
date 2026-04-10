@@ -1,0 +1,55 @@
+from functools import lru_cache
+
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+)
+
+from auth.core.config import AuthSettings, DBSettings
+from auth.db.session import get_session
+from auth.repositories.refresh_token_repo import RefreshTokenRepo
+from auth.repositories.user_repo import UserRepo
+from auth.services.auth_service import AuthService
+from auth.services.token_service import TokenService
+
+
+@lru_cache
+def get_db_settings():
+    return DBSettings()
+
+
+@lru_cache
+def get_auth_settings() -> AuthSettings:
+    return AuthSettings()
+
+
+def create_user_repo(
+    session: AsyncSession = Depends(get_session),
+) -> UserRepo:
+    return UserRepo(session=session)
+
+
+def create_refresh_token_repo(
+    session: AsyncSession = Depends(get_session),
+) -> RefreshTokenRepo:
+    return RefreshTokenRepo(session=session)
+
+
+def create_token_service(
+    auth_settings: AuthSettings = Depends(get_auth_settings),
+) -> TokenService:
+    return TokenService(auth_settings=auth_settings)
+
+
+def create_auth_service(
+    user_repo: UserRepo = Depends(create_user_repo),
+    refresh_token_repo: RefreshTokenRepo = Depends(create_refresh_token_repo),
+    token_service: TokenService = Depends(create_token_service),
+    auth_settings: AuthSettings = Depends(get_auth_settings),
+) -> AuthService:
+    return AuthService(
+        user_repo=user_repo,
+        refresh_token_repo=refresh_token_repo,
+        token_service=token_service,
+        auth_settings=auth_settings,
+    )

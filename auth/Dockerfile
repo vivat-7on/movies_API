@@ -1,4 +1,13 @@
-FROM ubuntu:latest
-LABEL authors="Work"
+FROM python:3.11-slim
 
-ENTRYPOINT ["top", "-b"]
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+RUN pip install -e .
+
+CMD ["uvicorn", "auth.main:app", "--host", "0.0.0.0", "--port", "8000"]

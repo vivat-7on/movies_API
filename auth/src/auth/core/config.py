@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from pydantic.v1 import BaseSettings
 
 
@@ -30,6 +28,11 @@ class DBSettings(BaseSettings):
         )
 
 
-@lru_cache
-def get_settings():
-    return DBSettings()
+class AuthSettings(BaseSettings):
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+    ACCESS_TOKEN_TTL_MINUTES: int
+    REFRESH_TOKEN_TTL_DAYS: int
+
+    class Config:
+        env_file = ".env"

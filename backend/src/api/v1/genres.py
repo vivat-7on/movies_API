@@ -1,12 +1,9 @@
 from uuid import UUID
 
+from auth.api import GenreSortOptions, PaginationQuery, create_genre_service
 from fastapi import APIRouter, Depends, HTTPException, Query
 from models.schemas import GenreListResponse, GenreResponse
 from services.genre import GenreService
-
-from api.v1.container import create_genre_service
-from api.v1.dependencies.pagination import PaginationQuery
-from api.v1.sorting import GenreSortOptions
 
 router = APIRouter()
 
