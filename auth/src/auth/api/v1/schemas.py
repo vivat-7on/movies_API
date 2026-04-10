@@ -19,3 +19,11 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class UserRegistrationRequest(BaseModel):
+    login: str
+    password: str
+    email: str | None
+    first_name: str | None
+    last_name: str | None

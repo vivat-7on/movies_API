@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from attrs import frozen
 
 from auth.core.config import AuthSettings
-from auth.core.hashing import verify_password
+from auth.core.hashing import hash_password, hash_token, verify_password
 from auth.dtos.token import ClaimDTO, TokensDTO
 from auth.exceptions.auth import InvalidCredentials
 from auth.ports.refresh_token_repo import IRefreshTokenRepo
@@ -25,7 +25,7 @@ class AuthService:
         user_agent: str | None = None,
     ) -> TokensDTO:
         user = await self.user_repo.get_user_by_login(login)
-        if not user:
+        if user is None:
             raise InvalidCredentials()
 
         if not verify_password(password, user.password_hash):
@@ -50,15 +50,41 @@ class AuthService:
             days=self.auth_settings.REFRESH_TOKEN_TTL_DAYS,
         )
 
+        refresh_token_hash = hash_token(refresh_token)
+
         await self.refresh_token_repo.save_refresh_token(
-            refresh_token=refresh_token,
-            user_id=str(user.id),
-            expires_at=refresh_expires_at.timestamp(),
-            created_at=now,
+            refresh_token_hash=refresh_token_hash,
+            user_id=user.id,
+            expires_at=refresh_expires_at,
             user_agent=user_agent,
         )
 
         return TokensDTO(
             access_token=access_token,
             refresh_token=refresh_token,
+        )
+
+    async def user_registration(
+        self,
+        login: str,
+        password: str,
+        email: str | None,
+        first_name: str | None,
+        last_name: str | None,
+    ) -> None:
+        user = await self.user_repo.get_user_by_login(login)
+        if user:
+            raise InvalidCredentials()
+
+        if email and await self.user_repo.email_exist(email):
+            raise InvalidCredentials()
+
+        password_hash = hash_password(password)
+
+        await self.user_repo.create_user(
+            login=login,
+            password_hash=password_hash,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
         )
