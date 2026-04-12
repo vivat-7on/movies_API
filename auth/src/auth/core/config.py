@@ -33,6 +33,7 @@ class AuthSettings(BaseSettings):
     JWT_ALGORITHM: str
     ACCESS_TOKEN_TTL_MINUTES: int
     REFRESH_TOKEN_TTL_DAYS: int
+    DEFAULT_ROLE_NAME: str
 
     class Config:
         env_file = ".env"

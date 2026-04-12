@@ -27,3 +27,7 @@ class UserRegistrationRequest(BaseModel):
     email: str | None
     first_name: str | None
     last_name: str | None
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

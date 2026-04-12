@@ -5,6 +5,7 @@ from starlette.requests import Request
 from auth.api.v1.dependencies import create_auth_service
 from auth.api.v1.schemas import (
     LoginRequest,
+    RefreshTokenRequest,
     TokenResponse,
     UserRegistrationRequest,
 )
@@ -38,7 +39,7 @@ async def login(
     )
 
 
-@router.post("/registration")
+@router.post("/registration", status_code=status.HTTP_201_CREATED)
 async def registration(
     data: UserRegistrationRequest,
     service: AuthService = Depends(create_auth_service),
@@ -57,3 +58,26 @@ async def registration(
             detail="Login or email already in use",
         ) from exc
     return
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh(
+    request: Request,
+    data: RefreshTokenRequest,
+    service: AuthService = Depends(create_auth_service),
+) -> TokenResponse:
+    user_agent = request.headers.get("User-Agent", None)
+    try:
+        tokens = await service.refresh_access_token(
+            refresh_token=data.refresh_token,
+            user_agent=user_agent,
+        )
+    except InvalidCredentials as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        ) from exc
+    return TokenResponse(
+        access_token=tokens.access_token,
+        refresh_token=tokens.refresh_token,
+    )

@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,24 +11,29 @@ class UserRepo(IUserRepo):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def get_user_by_login(self, login: str) -> User | None:
+    async def get_by_login(self, login: str) -> User | None:
         stmt = select(User).where(User.login == login)
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
-    async def email_exist(self, email: str) -> bool:
+    async def get_by_id(self, user_id: uuid.UUID) -> User | None:
+        stmt = select(User).where(User.id == user_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def email_exists(self, email: str) -> bool:
         stmt = select(exists().where(User.email == email))
         result = await self.session.execute(stmt)
         return result.scalar()
 
-    async def create_user(
+    async def create(
         self,
         login: str,
         password_hash: str,
         email: str | None,
         first_name: str | None,
         last_name: str | None,
-    ) -> None:
+    ) -> User:
         user = User(
             login=login,
             password_hash=password_hash,
@@ -35,4 +42,4 @@ class UserRepo(IUserRepo):
             email=email,
         )
         self.session.add(user)
-        await self.session.commit()
+        return user

@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import RefreshToken
@@ -11,7 +12,7 @@ class RefreshTokenRepo(IRefreshTokenRepo):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def save_refresh_token(
+    async def save(
         self,
         refresh_token_hash: str,
         user_id: uuid.UUID,
@@ -25,4 +26,11 @@ class RefreshTokenRepo(IRefreshTokenRepo):
             user_agent=user_agent,
         )
         self.session.add(token)
-        await self.session.commit()
+
+    async def get_by_hash(self, refresh_token_hash: str) -> RefreshToken | None:
+        stmt = select(RefreshToken).where(RefreshToken.token_hash == refresh_token_hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def delete(self, token: RefreshToken) -> None:
+        await self.session.delete(token)
