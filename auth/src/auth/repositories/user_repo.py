@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import exists, select
+from sqlalchemy import exists, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import User
@@ -43,3 +43,11 @@ class UserRepo(IUserRepo):
         )
         self.session.add(user)
         return user
+
+    async def increase_token_version(self, user_id: uuid.UUID) -> None:
+        stmt = (
+            update(User)
+            .where(User.id == user_id)
+            .values(token_version=User.token_version + 1)
+        )
+        await self.session.execute(stmt)

@@ -2,10 +2,12 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from attrs import frozen
-from jose import jwt
+from jose import ExpiredSignatureError, JWTError, jwt
+from pydantic import ValidationError
 
 from auth.core.config import AuthSettings
 from auth.dtos.token import ClaimDTO
+from auth.exceptions.auth import InvalidCredentials
 
 
 @frozen
@@ -42,3 +44,30 @@ class TokenService:
             iat=int(now.timestamp()),
             exp=int(expires.timestamp()),
         )
+
+    def decode_access_token(
+        self,
+        access_token: str,
+    ) -> ClaimDTO:
+        try:
+            payload = jwt.decode(
+                access_token,
+                key=self.auth_settings.JWT_SECRET_KEY,
+                algorithms=[self.auth_settings.JWT_ALGORITHM],
+                options={
+                    "verify_aud": False,
+                    "verify_iss": False,
+                },
+            )
+        except ExpiredSignatureError:
+            raise InvalidCredentials("Token expired") from None
+
+        except JWTError:
+            raise InvalidCredentials("Token invalid") from None
+
+        try:
+            claim = ClaimDTO(**payload)
+        except ValidationError as exc:
+            raise InvalidCredentials("Invalid token pyload") from exc
+
+        return claim

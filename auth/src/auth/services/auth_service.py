@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta, timezone
 
 from attrs import frozen
@@ -5,8 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.config import AuthSettings
 from auth.core.hashing import hash_password, hash_token, verify_password
-from auth.dtos.token import TokensDTO
-from auth.exceptions.auth import InvalidCredentials, RoleNotFound
+from auth.dtos.token import TokensDTO, UserDTO
+from auth.exceptions.auth import InvalidCredentials, RoleNotFound, UserNotFound
 from auth.ports.refresh_token_repo import IRefreshTokenRepo
 from auth.ports.roles_repo import IRoleRepo
 from auth.ports.user_repo import IUserRepo
@@ -159,3 +160,34 @@ class AuthService:
             access_token=access_token,
             refresh_token=new_refresh_token,
         )
+
+    async def get_current_user(self, access_token: str) -> UserDTO:
+        claim = self.token_service.decode_access_token(access_token)
+
+        user = await self.user_repo.get_by_id(uuid.UUID(claim.sub))
+        if user is None:
+            raise UserNotFound()
+
+        if user.token_version != claim.token_version:
+            raise InvalidCredentials()
+
+        return UserDTO(
+            user_id=str(user.id),
+            roles=claim.roles,
+        )
+
+    async def logout(self, refresh_token: str) -> None:
+        refresh_token_hash = hash_token(refresh_token)
+        async with self.session.begin():
+            token = await self.refresh_token_repo.get_by_hash(
+                refresh_token_hash,
+            )
+            if token is None:
+                raise InvalidCredentials()
+            await self.refresh_token_repo.delete(token)
+
+    async def logout_all(self, user_id: uuid.UUID) -> None:
+        user = await self.user_repo.get_by_id(user_id)
+        if user is None:
+            raise InvalidCredentials()
+        await self.user_repo.increase_token_version(user_id=user.id)

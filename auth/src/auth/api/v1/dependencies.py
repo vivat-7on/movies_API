@@ -1,12 +1,16 @@
 from functools import lru_cache
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
 )
+from starlette import status
 
 from auth.core.config import AuthSettings, DBSettings
 from auth.db.session import get_session
+from auth.dtos.token import UserDTO
+from auth.exceptions.auth import InvalidCredentials
 from auth.repositories.refresh_token_repo import RefreshTokenRepo
 from auth.repositories.roles_repo import RoleRepo
 from auth.repositories.user_repo import UserRepo
@@ -73,3 +77,33 @@ def create_auth_service(
         user_role_repo=user_role_repo,
         session=session,
     )
+
+
+security = HTTPBearer()
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    service: AuthService = Depends(create_auth_service),
+) -> UserDTO:
+    token = credentials.credentials
+    try:
+        user = await service.get_current_user(token)
+    except InvalidCredentials as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing token",
+        ) from exc
+    return user
+
+
+def require_roles(required_roles: list[str]):
+    async def dependency(user: UserDTO = Depends(get_current_user)):
+        if not any(role in user.roles for role in required_roles):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Forbidden",
+            )
+        return user
+
+    return dependency

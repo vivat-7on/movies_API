@@ -31,3 +31,8 @@ class UserRegistrationRequest(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class UserResponse(BaseModel):
+    user_id: str
+    roles: list[str]

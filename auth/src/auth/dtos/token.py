@@ -12,3 +12,8 @@ class ClaimDTO(BaseModel):
 class TokensDTO(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class UserDTO(BaseModel):
+    user_id: str
+    roles: list[str]
