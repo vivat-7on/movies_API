@@ -137,14 +137,13 @@ async def test_user_registration_role_not_found(
 async def test_refresh_access_token(auth_service, refresh_token_repo):
     token_row = "refresh_token"
     hashed_token = hash_token(token_row)
-    refresh_token = RefreshToken(
+    refresh_token_repo.token = RefreshToken(
         user_id=USER_ID,
         token_hash=hashed_token,
         expires_at=datetime.datetime(2220, 10, 10).astimezone(
             datetime.timezone.utc,
         ),
     )
-    refresh_token_repo.token = refresh_token
     tokens = await auth_service.refresh_access_token(token_row)
     assert tokens.access_token == "access_token"
     assert refresh_token_repo.saved_data["refresh_token_hash"] == hash_token(
@@ -158,3 +157,60 @@ async def test_refresh_access_token(auth_service, refresh_token_repo):
 async def test_refresh_old_token(auth_service, refresh_token_repo):
     with pytest.raises(InvalidCredentials):
         await auth_service.refresh_access_token("old_refresh_token")
+
+
+def test_me_success(client, override_current_user):
+    response = client.get("/api/v1/auth/me")
+    assert response.status_code == 200
+    assert response.json() == {
+        "user_id": "123",
+        "roles": ["user"],
+    }
+
+
+def test_me_unauthorized(client, override_invalid_user):
+    response = client.get("/api/v1/auth/me")
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Invalid credentials"}
+
+
+@pytest.mark.asyncio
+async def test_logout_success(auth_service, refresh_token_repo):
+    token_row = "refresh_token"
+    hashed_token = hash_token(token_row)
+    refresh_token = RefreshToken(
+        user_id=USER_ID,
+        token_hash=hashed_token,
+        expires_at=datetime.datetime(2220, 10, 10).astimezone(
+            datetime.timezone.utc,
+        ),
+    )
+    assert refresh_token_repo.deleted_token is None
+    refresh_token_repo.token = refresh_token
+    await auth_service.logout(token_row)
+    assert refresh_token_repo.deleted_token is not None
+    assert refresh_token_repo.deleted_token.token_hash == hashed_token
+    assert refresh_token_repo.deleted_token.user_id == USER_ID
+
+
+@pytest.mark.asyncio
+async def test_logout_invalid_token(auth_service, refresh_token_repo):
+    with pytest.raises(InvalidCredentials):
+        await auth_service.logout("invalid_token")
+
+
+@pytest.mark.asyncio
+async def test_logout_all_success(auth_service, user_repo):
+    await auth_service.logout_all(USER_ID)
+    assert user_repo.token_version_increased_for == USER_ID
+
+
+def test_admin_success(client, override_admin):
+    response = client.get("/api/v1/auth/admin")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Welcome admin"}
+
+
+def test_admin_forbidden(client, override_current_user):
+    response = client.get("/api/v1/auth/admin")
+    assert response.status_code == 403

@@ -2,10 +2,15 @@ import datetime
 import uuid
 
 import pytest
+from auth.api.v1.dependencies import get_current_user
 from auth.core.hashing import hash_password
-from auth.dtos.token import ClaimDTO
+from auth.dtos.token import ClaimDTO, UserDTO
+from auth.main import app
 from auth.models.models import RefreshToken, User
 from auth.services.auth_service import AuthService
+from fastapi import HTTPException
+from starlette import status
+from starlette.testclient import TestClient
 
 USER_ID = uuid.UUID("5e866b18-f369-4448-85ac-e8941cbfa044")
 
@@ -13,8 +18,9 @@ USER_ID = uuid.UUID("5e866b18-f369-4448-85ac-e8941cbfa044")
 class FakeUserRepo:
     def __init__(self):
         self.user = None
+        self.token_version_increased_for = None
 
-    async def get_by_id(self, user_id: uuid.UUID) -> User | None:
+    async def get_by_id(self, user_id) -> User | None:
         return User(
             id=USER_ID,
             login="test_login",
@@ -57,6 +63,9 @@ class FakeUserRepo:
         if email == "test_email":
             return False
         return True
+
+    async def increase_token_version(self, user_id) -> None:
+        self.token_version_increased_for = user_id
 
 
 class FakeRoleRepo:
@@ -158,6 +167,27 @@ class FakeAuthSettings:
     DEFAULT_ROLE_NAME = "user"
 
 
+def fake_get_current_user():
+    return UserDTO(
+        user_id="123",
+        roles=["user"],
+    )
+
+
+def fake_get_admin():
+    return UserDTO(
+        user_id="123",
+        roles=["admin"],
+    )
+
+
+def fake_invalid_user():
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid credentials",
+    )
+
+
 @pytest.fixture
 def user_repo():
     return FakeUserRepo()
@@ -238,3 +268,33 @@ def auth_service_no_role(
         auth_settings=auth_settings,
         user_role_repo=user_role_repo,
     )
+
+
+@pytest.fixture
+def client():
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+@pytest.fixture(autouse=True)
+def clear_dependency_overrides():
+    yield
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def override_current_user():
+    app.dependency_overrides[get_current_user] = fake_get_current_user
+    yield
+
+
+@pytest.fixture
+def override_admin():
+    app.dependency_overrides[get_current_user] = fake_get_admin
+    yield
+
+
+@pytest.fixture
+def override_invalid_user():
+    app.dependency_overrides[get_current_user] = fake_invalid_user
+    yield
