@@ -2,12 +2,13 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from attrs import frozen
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.config import AuthSettings
 from auth.core.hashing import hash_password, hash_token, verify_password
 from auth.dtos.token import TokensDTO, UserDTO
-from auth.exceptions.auth import InvalidCredentials, RoleNotFound, UserNotFound
+from auth.exceptions.auth import InvalidCredentials
+from auth.exceptions.role import RoleNotFound
+from auth.exceptions.user import UserNotFound
 from auth.ports.refresh_token_repo import IRefreshTokenRepo
 from auth.ports.roles_repo import IRoleRepo
 from auth.ports.user_repo import IUserRepo
@@ -23,7 +24,6 @@ class AuthService:
     auth_settings: AuthSettings
     role_repo: IRoleRepo
     user_role_repo: IUserRoleRepo
-    session: AsyncSession
 
     async def login(
         self,

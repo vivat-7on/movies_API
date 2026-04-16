@@ -3,7 +3,8 @@ import uuid
 
 import pytest
 from auth.core.hashing import hash_token, verify_password
-from auth.exceptions.auth import InvalidCredentials, RoleNotFound
+from auth.exceptions.auth import InvalidCredentials
+from auth.exceptions.role import RoleNotFound
 from auth.models.models import RefreshToken
 
 USER_ID = uuid.UUID("5e866b18-f369-4448-85ac-e8941cbfa044")

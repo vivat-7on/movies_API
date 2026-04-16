@@ -1,5 +1,7 @@
 import uuid
 
+from sqlalchemy import delete
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import UserRole
@@ -15,5 +17,19 @@ class UserRoleRepo(IUserRoleRepo):
         user_id: uuid.UUID,
         role_id: uuid.UUID,
     ) -> None:
-        user_role = UserRole(user_id=user_id, role_id=role_id)
-        self.session.add(user_role)
+        stmt = (
+            insert(UserRole)
+            .values(user_id=user_id, role_id=role_id)
+            .on_conflict_do_nothing(
+                index_elements=["user_id", "role_id"],
+            )
+        )
+        await self.session.execute(stmt)
+
+    async def remove_role(self, user_id: uuid.UUID, role_id: uuid.UUID) -> None:
+        stmt = (
+            delete(UserRole)
+            .where(UserRole.user_id == user_id)
+            .where(UserRole.role_id == role_id)
+        )
+        await self.session.execute(stmt)

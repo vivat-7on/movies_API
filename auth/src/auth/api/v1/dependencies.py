@@ -18,6 +18,7 @@ from auth.repositories.user_role_repo import UserRoleRepo
 from auth.services.auth_service import AuthService
 from auth.services.role_service import RoleService
 from auth.services.token_service import TokenService
+from auth.services.user_service import UserService
 
 
 @lru_cache
@@ -67,7 +68,6 @@ def create_auth_service(
     auth_settings: AuthSettings = Depends(get_auth_settings),
     role_repo: RoleRepo = Depends(create_role_repo),
     user_role_repo: UserRoleRepo = Depends(create_user_role_repo),
-    session: AsyncSession = Depends(get_session),
 ) -> AuthService:
     return AuthService(
         user_repo=user_repo,
@@ -76,15 +76,25 @@ def create_auth_service(
         auth_settings=auth_settings,
         role_repo=role_repo,
         user_role_repo=user_role_repo,
-        session=session,
     )
 
 
 def create_role_service(
     role_repo: RoleRepo = Depends(create_role_repo),
-    session: AsyncSession = Depends(get_session),
 ) -> RoleService:
-    return RoleService(role_repo=role_repo, session=session)
+    return RoleService(role_repo=role_repo)
+
+
+def create_user_service(
+    user_repo: UserRepo = Depends(create_user_repo),
+    role_repo: RoleRepo = Depends(create_role_repo),
+    user_role_repo: UserRoleRepo = Depends(create_user_role_repo),
+) -> UserService:
+    return UserService(
+        user_repo=user_repo,
+        role_repo=role_repo,
+        user_role_repo=user_role_repo,
+    )
 
 
 security = HTTPBearer()

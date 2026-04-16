@@ -147,18 +147,6 @@ class FakeRefreshTokenRepo:
         self.deleted_token = token
 
 
-class FakeSession:
-    class _Begin:
-        async def __aenter__(self):
-            return None
-
-        async def __aexit__(self, exc_type, exc_val, exc_tb):
-            return None
-
-    def begin(self):
-        return self._Begin()
-
-
 class FakeAuthSettings:
     JWT_SECRET_KEY = "secret_key"
     JWT_ALGORITHM = "HS256"
@@ -209,11 +197,6 @@ def role_repo():
 
 
 @pytest.fixture
-def session():
-    return FakeSession()
-
-
-@pytest.fixture
 def auth_settings():
     return FakeAuthSettings()
 
@@ -234,7 +217,6 @@ def auth_service(
     refresh_token_repo,
     token_service,
     role_repo,
-    session,
     auth_settings,
     user_role_repo,
 ) -> AuthService:
@@ -243,7 +225,6 @@ def auth_service(
         refresh_token_repo=refresh_token_repo,
         token_service=token_service,
         role_repo=role_repo,
-        session=session,
         auth_settings=auth_settings,
         user_role_repo=user_role_repo,
     )
@@ -254,7 +235,6 @@ def auth_service_no_role(
     user_repo,
     refresh_token_repo,
     token_service,
-    session,
     auth_settings,
     user_role_repo,
     role_repo_no_role,
@@ -264,7 +244,6 @@ def auth_service_no_role(
         refresh_token_repo=refresh_token_repo,
         token_service=token_service,
         role_repo=role_repo_no_role,
-        session=session,
         auth_settings=auth_settings,
         user_role_repo=user_role_repo,
     )

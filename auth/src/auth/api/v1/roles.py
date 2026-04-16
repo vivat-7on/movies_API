@@ -6,7 +6,7 @@ from starlette import status
 from auth.api.v1.dependencies import create_role_service, require_roles
 from auth.api.v1.schemas import RoleCreateResponse, RoleRequest, RoleResponse
 from auth.dtos.token import UserDTO
-from auth.exceptions.roles import RoleAlreadyExist, RoleNotFound
+from auth.exceptions.role import RoleAlreadyExist, RoleNotFound
 from auth.services.role_service import RoleService
 
 router = APIRouter()

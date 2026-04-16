@@ -48,3 +48,8 @@ class RoleResponse(BaseModel):
 
 class RoleCreateResponse(BaseModel):
     role: str
+
+
+class UserRoleCreateResponse(BaseModel):
+    user_id: str
+    role_id: str
