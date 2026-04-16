@@ -36,3 +36,15 @@ class RefreshTokenRequest(BaseModel):
 class UserResponse(BaseModel):
     user_id: str
     roles: list[str]
+
+
+class RoleRequest(BaseModel):
+    role_name: str
+
+
+class RoleResponse(BaseModel):
+    roles: list[str]
+
+
+class RoleCreateResponse(BaseModel):
+    role: str

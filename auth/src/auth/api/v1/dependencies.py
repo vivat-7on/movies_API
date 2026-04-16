@@ -16,6 +16,7 @@ from auth.repositories.roles_repo import RoleRepo
 from auth.repositories.user_repo import UserRepo
 from auth.repositories.user_role_repo import UserRoleRepo
 from auth.services.auth_service import AuthService
+from auth.services.role_service import RoleService
 from auth.services.token_service import TokenService
 
 
@@ -47,16 +48,16 @@ def create_token_service(
     return TokenService(auth_settings=auth_settings)
 
 
-def create_user_role_repo(
-    session: AsyncSession = Depends(get_session),
-) -> UserRoleRepo:
-    return UserRoleRepo(session=session)
-
-
 def create_role_repo(
     session: AsyncSession = Depends(get_session),
 ) -> RoleRepo:
     return RoleRepo(session=session)
+
+
+def create_user_role_repo(
+    session: AsyncSession = Depends(get_session),
+) -> UserRoleRepo:
+    return UserRoleRepo(session=session)
 
 
 def create_auth_service(
@@ -77,6 +78,13 @@ def create_auth_service(
         user_role_repo=user_role_repo,
         session=session,
     )
+
+
+def create_role_service(
+    role_repo: RoleRepo = Depends(create_role_repo),
+    session: AsyncSession = Depends(get_session),
+) -> RoleService:
+    return RoleService(role_repo=role_repo, session=session)
 
 
 security = HTTPBearer()
