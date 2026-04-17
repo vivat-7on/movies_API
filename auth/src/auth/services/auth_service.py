@@ -38,7 +38,7 @@ class AuthService:
         if not verify_password(password, user.password_hash):
             raise InvalidCredentials()
 
-        roles = await self.role_repo.get_by_user_id(user_id=user.id)
+        roles = await self.role_repo.get_by_user_id(user_id=user.id) or []
 
         claim = self.token_service.build_claim(
             user_id=user.id,
@@ -143,7 +143,7 @@ class AuthService:
         if user is None:
             raise InvalidCredentials()
 
-        roles = await self.role_repo.get_by_user_id(user_id=user.id)
+        roles = await self.role_repo.get_by_user_id(user_id=user.id) or []
         claim = self.token_service.build_claim(
             user_id=user.id,
             roles=roles,
@@ -160,7 +160,12 @@ class AuthService:
     async def get_current_user(self, access_token: str) -> UserDTO:
         claim = self.token_service.decode_access_token(access_token)
 
-        user = await self.user_repo.get_by_id(uuid.UUID(claim.sub))
+        try:
+            user_id = uuid.UUID(claim.sub)
+        except ValueError as exc:
+            raise InvalidCredentials("Invalid user ID in token") from exc
+
+        user = await self.user_repo.get_by_id(user_id)
         if user is None:
             raise UserNotFound()
 
@@ -169,7 +174,7 @@ class AuthService:
 
         return UserDTO(
             user_id=str(user.id),
-            roles=claim.roles,
+            roles=claim.roles or [],
         )
 
     async def logout(self, refresh_token: str) -> None:
@@ -178,7 +183,8 @@ class AuthService:
             refresh_token_hash,
         )
         if token is None:
-            raise InvalidCredentials()
+            return
+
         await self.refresh_token_repo.delete(token)
 
     async def logout_all(self, user_id: uuid.UUID) -> None:

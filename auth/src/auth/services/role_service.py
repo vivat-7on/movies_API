@@ -24,6 +24,9 @@ class RoleService:
         if role is None:
             raise RoleNotFound()
 
+        if role.name == role_name:
+            return
+
         existing_id = await self.role_repo.get_id_by_name(name=role_name)
         if existing_id is not None and existing_id != role_id:
             raise RoleAlreadyExist()

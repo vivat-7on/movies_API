@@ -103,13 +103,7 @@ async def logout(
     data: RefreshTokenRequest,
     service: AuthService = Depends(create_auth_service),
 ) -> None:
-    try:
-        await service.logout(refresh_token=data.refresh_token)
-    except InvalidCredentials as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        ) from exc
+    await service.logout(refresh_token=data.refresh_token)
     return None
 
 

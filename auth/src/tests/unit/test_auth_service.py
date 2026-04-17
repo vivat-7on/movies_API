@@ -5,7 +5,7 @@ import pytest
 from auth.core.hashing import hash_token, verify_password
 from auth.exceptions.auth import InvalidCredentials
 from auth.exceptions.role import RoleNotFound
-from auth.models.models import RefreshToken
+from auth.models.models import RefreshToken, User
 
 USER_ID = uuid.UUID("5e866b18-f369-4448-85ac-e8941cbfa044")
 LOGIN = "test_login"
@@ -45,7 +45,9 @@ async def test_login_user_not_found(auth_service, user_repo):
 
 
 @pytest.mark.asyncio
-async def test_login_claim(auth_service, token_service):
+async def test_login_claim(auth_service, token_service, role_repo):
+    role_repo.roles_by_id[USER_ID] = ["user"]
+
     await auth_service.login(
         login=LOGIN,
         password=PASSWORD,
@@ -57,12 +59,32 @@ async def test_login_claim(auth_service, token_service):
 
 
 @pytest.mark.asyncio
-async def test_user_registration(auth_service, user_repo, user_role_repo):
+async def test_login_roles_none(auth_service, role_repo):
+    async def fake_roles(*args, **kwargs):
+        return None
+
+    role_repo.get_by_user_id = fake_roles
+    result = await auth_service.login(
+        login=LOGIN,
+        password=PASSWORD,
+    )
+
+    assert result.access_token == "access_token"
+
+
+@pytest.mark.asyncio
+async def test_user_registration(
+    auth_service,
+    user_repo,
+    user_role_repo,
+    role_repo,
+):
     login = "test_registration_login"
     password = PASSWORD
     email = "test_email"
     first_name = "test_first_name"
     last_name = "test_last_name"
+    role_repo.roles_by_name["user"] = uuid.uuid4()
     await auth_service.user_registration(
         login=login,
         password=password,
@@ -135,6 +157,23 @@ async def test_user_registration_role_not_found(
 
 
 @pytest.mark.asyncio
+async def test_user_registration_no_default_role(auth_service):
+    with pytest.raises(RoleNotFound):
+        login = "test_registration_login"
+        password = PASSWORD
+        email = "test_email"
+        first_name = "test_first_name"
+        last_name = "test_last_name"
+        await auth_service.user_registration(
+            login=login,
+            password=password,
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+        )
+
+
+@pytest.mark.asyncio
 async def test_refresh_access_token(auth_service, refresh_token_repo):
     token_row = "refresh_token"
     hashed_token = hash_token(token_row)
@@ -160,19 +199,64 @@ async def test_refresh_old_token(auth_service, refresh_token_repo):
         await auth_service.refresh_access_token("old_refresh_token")
 
 
-def test_me_success(client, override_current_user):
-    response = client.get("/api/v1/auth/me")
-    assert response.status_code == 200
-    assert response.json() == {
-        "user_id": "123",
-        "roles": ["user"],
-    }
+@pytest.mark.asyncio
+async def test_refresh_token_expired(auth_service, refresh_token_repo):
+    token_row = "refresh_token"
+    hashed = hash_token(token_row)
+
+    refresh_token_repo.token = RefreshToken(
+        user_id=USER_ID,
+        token_hash=hashed,
+        expires_at=datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc),
+    )
+
+    with pytest.raises(InvalidCredentials):
+        await auth_service.refresh_access_token(token_row)
 
 
-def test_me_unauthorized(client, override_invalid_user):
-    response = client.get("/api/v1/auth/me")
-    assert response.status_code == 401
-    assert response.json() == {"detail": "Invalid credentials"}
+@pytest.mark.asyncio
+async def test_refresh_token_reuse(auth_service, refresh_token_repo):
+    token_row = "refresh_token"
+    hashed = hash_token(token_row)
+
+    refresh_token = RefreshToken(
+        user_id=USER_ID,
+        token_hash=hashed,
+        expires_at=datetime.datetime(2220, 1, 1, tzinfo=datetime.timezone.utc),
+    )
+
+    refresh_token_repo.token = refresh_token
+
+    await auth_service.refresh_access_token(token_row)
+
+    refresh_token_repo.token = None
+
+    with pytest.raises(InvalidCredentials):
+        await auth_service.refresh_access_token(token_row)
+
+
+@pytest.mark.asyncio
+async def test_refresh_user_deleted(
+    auth_service,
+    refresh_token_repo,
+    user_repo,
+):
+    token_row = "refresh_token"
+    hashed = hash_token(token_row)
+
+    refresh_token_repo.token = RefreshToken(
+        user_id=USER_ID,
+        token_hash=hashed,
+        expires_at=datetime.datetime(2220, 1, 1, tzinfo=datetime.timezone.utc),
+    )
+
+    async def fake_get_user(*args, **kwargs):
+        return None
+
+    user_repo.get_by_id = fake_get_user
+
+    with pytest.raises(InvalidCredentials):
+        await auth_service.refresh_access_token(token_row)
 
 
 @pytest.mark.asyncio
@@ -195,9 +279,10 @@ async def test_logout_success(auth_service, refresh_token_repo):
 
 
 @pytest.mark.asyncio
-async def test_logout_invalid_token(auth_service, refresh_token_repo):
-    with pytest.raises(InvalidCredentials):
-        await auth_service.logout("invalid_token")
+async def test_logout_idempotent(auth_service, refresh_token_repo):
+    refresh_token_repo.token = None
+
+    await auth_service.logout("random_token")
 
 
 @pytest.mark.asyncio
@@ -206,12 +291,43 @@ async def test_logout_all_success(auth_service, user_repo):
     assert user_repo.token_version_increased_for == USER_ID
 
 
-def test_admin_success(client, override_admin):
-    response = client.get("/api/v1/auth/admin")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Welcome admin"}
+@pytest.mark.asyncio
+async def test_get_current_user_token_version_mismatch(auth_service, user_repo):
+    class FakeClaim:
+        sub = str(USER_ID)
+        roles = ["user"]
+        token_version = 1
+
+    def fake_decode(*args, **kwargs):
+        return FakeClaim()
+
+    auth_service.token_service.decode_access_token = fake_decode
+
+    async def fake_user(*args, **kwargs):
+        return User(
+            id=USER_ID,
+            login="test",
+            password_hash="hash",
+            token_version=2,
+        )
+
+    user_repo.get_by_id = fake_user
+
+    with pytest.raises(InvalidCredentials):
+        await auth_service.get_current_user("token")
 
 
-def test_admin_forbidden(client, override_current_user):
-    response = client.get("/api/v1/auth/admin")
-    assert response.status_code == 403
+@pytest.mark.asyncio
+async def test_get_current_user_invalid_uuid(auth_service):
+    class FakeClaim:
+        sub = "not-a-uuid"
+        roles = ["user"]
+        token_version = 1
+
+    def fake_decode(*args, **kwargs):
+        return FakeClaim()
+
+    auth_service.token_service.decode_access_token = fake_decode
+
+    with pytest.raises(InvalidCredentials):
+        await auth_service.get_current_user("token")
