@@ -5,7 +5,7 @@ import pytest
 from auth.core.hashing import hash_token, verify_password
 from auth.exceptions.auth import InvalidCredentials
 from auth.exceptions.role import RoleNotFound
-from auth.models.models import RefreshToken, User
+from auth.models.models import RefreshToken
 
 USER_ID = uuid.UUID("5e866b18-f369-4448-85ac-e8941cbfa044")
 LOGIN = "test_login"
@@ -289,45 +289,3 @@ async def test_logout_idempotent(auth_service, refresh_token_repo):
 async def test_logout_all_success(auth_service, user_repo):
     await auth_service.logout_all(USER_ID)
     assert user_repo.token_version_increased_for == USER_ID
-
-
-@pytest.mark.asyncio
-async def test_get_current_user_token_version_mismatch(auth_service, user_repo):
-    class FakeClaim:
-        sub = str(USER_ID)
-        roles = ["user"]
-        token_version = 1
-
-    def fake_decode(*args, **kwargs):
-        return FakeClaim()
-
-    auth_service.token_service.decode_access_token = fake_decode
-
-    async def fake_user(*args, **kwargs):
-        return User(
-            id=USER_ID,
-            login="test",
-            password_hash="hash",
-            token_version=2,
-        )
-
-    user_repo.get_by_id = fake_user
-
-    with pytest.raises(InvalidCredentials):
-        await auth_service.get_current_user("token")
-
-
-@pytest.mark.asyncio
-async def test_get_current_user_invalid_uuid(auth_service):
-    class FakeClaim:
-        sub = "not-a-uuid"
-        roles = ["user"]
-        token_version = 1
-
-    def fake_decode(*args, **kwargs):
-        return FakeClaim()
-
-    auth_service.token_service.decode_access_token = fake_decode
-
-    with pytest.raises(InvalidCredentials):
-        await auth_service.get_current_user("token")

@@ -89,11 +89,13 @@ def create_user_service(
     user_repo: UserRepo = Depends(create_user_repo),
     role_repo: RoleRepo = Depends(create_role_repo),
     user_role_repo: UserRoleRepo = Depends(create_user_role_repo),
+    token_service: TokenService = Depends(create_token_service),
 ) -> UserService:
     return UserService(
         user_repo=user_repo,
         role_repo=role_repo,
         user_role_repo=user_role_repo,
+        token_service=token_service,
     )
 
 
@@ -102,7 +104,7 @@ security = HTTPBearer()
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    service: AuthService = Depends(create_auth_service),
+    service: UserService = Depends(create_user_service),
 ) -> UserDTO:
     token = credentials.credentials
     try:

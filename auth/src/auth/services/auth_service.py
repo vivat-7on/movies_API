@@ -5,10 +5,9 @@ from attrs import frozen
 
 from auth.core.config import AuthSettings
 from auth.core.hashing import hash_password, hash_token, verify_password
-from auth.dtos.token import TokensDTO, UserDTO
+from auth.dtos.token import TokensDTO
 from auth.exceptions.auth import InvalidCredentials
 from auth.exceptions.role import RoleNotFound
-from auth.exceptions.user import UserNotFound
 from auth.ports.refresh_token_repo import IRefreshTokenRepo
 from auth.ports.roles_repo import IRoleRepo
 from auth.ports.user_repo import IUserRepo
@@ -155,26 +154,6 @@ class AuthService:
         return TokensDTO(
             access_token=access_token,
             refresh_token=new_refresh_token,
-        )
-
-    async def get_current_user(self, access_token: str) -> UserDTO:
-        claim = self.token_service.decode_access_token(access_token)
-
-        try:
-            user_id = uuid.UUID(claim.sub)
-        except ValueError as exc:
-            raise InvalidCredentials("Invalid user ID in token") from exc
-
-        user = await self.user_repo.get_by_id(user_id)
-        if user is None:
-            raise UserNotFound()
-
-        if user.token_version != claim.token_version:
-            raise InvalidCredentials()
-
-        return UserDTO(
-            user_id=str(user.id),
-            roles=claim.roles or [],
         )
 
     async def logout(self, refresh_token: str) -> None:
