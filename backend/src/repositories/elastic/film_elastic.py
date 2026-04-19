@@ -115,3 +115,44 @@ class FilmElasticRepository(BaseElasticRepository[Film]):
             size=size,
             sort=None,
         )
+
+    async def get_new_films(
+        self,
+        sort: str | None,
+        genre: str | None,
+        page: int,
+        size: int,
+    ) -> tuple[int, list[Film]]:
+        query_builder = QueryBuilder()
+
+        query_builder.filter_range("creation_date", gte="now-3y")
+
+        if genre:
+            query_builder.filter_nested(
+                path="genres",
+                field="genres.id",
+                value=genre,
+            )
+
+        query = query_builder.build()
+
+        field, order = self._parse_sort(sort)
+
+        sort_clause = None
+
+        if field and order:
+            sort_builder = SortBuilder(set(SORT_FIELDS.values()))
+            mapped_field = SORT_FIELDS.get(field)
+            if mapped_field:
+                sort_builder.add(
+                    field=mapped_field,
+                    order=order,
+                )
+                sort_clause = sort_builder.build()
+
+        return await super().get_list(
+            query=query,
+            page=page,
+            size=size,
+            sort=sort_clause,
+        )

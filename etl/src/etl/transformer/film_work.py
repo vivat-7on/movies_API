@@ -28,5 +28,6 @@ def transform_film_work(film_work: FilmWorkDTO) -> FilmEsDocument:
         directors=[EsPerson(id=p.id, name=p.full_name) for p in directors],
         actors=[EsPerson(id=p.id, name=p.full_name) for p in actors],
         writers=[EsPerson(id=p.id, name=p.full_name) for p in writers],
+        creation_date=film_work.creation_date,
     )
     return document

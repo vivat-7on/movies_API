@@ -85,3 +85,26 @@ class QueryBuilder:
             }
 
         return {"match_all": {}}
+
+    def filter_range(
+        self,
+        field: str,
+        gte: str | None = None,
+        lte: str | None = None,
+    ) -> "QueryBuilder":
+        range_query = {}
+
+        if gte is not None:
+            range_query["gte"] = gte
+        if lte is not None:
+            range_query["lte"] = lte
+
+        self._filters.append(
+            {
+                "range": {
+                    field: range_query,
+                }
+            }
+        )
+
+        return self

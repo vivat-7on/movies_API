@@ -61,6 +61,7 @@ class ElasticsearchLoader:
                 "properties": {
                     "id": {"type": "keyword"},
                     "imdb_rating": {"type": "float"},
+                    "creation_date": {"type": "date"},
                     "genres": {
                         "type": "nested",
                         "dynamic": "strict",

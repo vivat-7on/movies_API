@@ -36,8 +36,8 @@ class FilmService:
         size: int,
     ) -> tuple[int, list[Film]]:
         cache_key = self._build_list_cache_key(
-            sort=sort,
-            genre=str(genre) if genre else None,
+            sort=sort or "",
+            genre=str(genre) if genre else "",
             page=page,
             size=size,
         )
@@ -128,6 +128,34 @@ class FilmService:
 
         return result
 
+    async def get_new(
+        self,
+        sort: str | None,
+        genre: UUID | None,
+        page: int,
+        size: int,
+    ) -> tuple[int, list[Film]]:
+        cache_key = self._build_new_cache_key(
+            sort=sort or "",
+            genre=str(genre) if genre else "",
+            page=page,
+            size=size,
+        )
+        cached = await self.cache_repo.get_list(cache_key)
+        if cached is not None:
+            return cached
+
+        result = await self.elastic_repo.get_new_films(
+            sort=sort,
+            genre=str(genre) if genre else None,
+            page=page,
+            size=size,
+        )
+
+        await self.cache_repo.put_list(cache_key, result)
+
+        return result
+
     def _build_list_cache_key(
         self,
         sort: str,
@@ -159,3 +187,18 @@ class FilmService:
         size: int,
     ) -> str:
         return f"films:person:person_id={person_id}:page={page}:size={size}"
+
+    def _build_new_cache_key(
+        self,
+        sort: str,
+        genre: str,
+        page: int,
+        size: int,
+    ) -> str:
+        return (
+            "films:new:"
+            f"sort={sort or 'default'}:"
+            f"genre={genre or 'all'}:"
+            f"page={page}:"
+            f"size={size}"
+        )

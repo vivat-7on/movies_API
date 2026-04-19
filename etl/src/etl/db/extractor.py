@@ -208,6 +208,7 @@ class PostgresExtractor:
                      fw.rating,
                      fw.description,
                      fw.updated_at,
+                     fw.creation_date,
                      COALESCE(
                              jsonb_agg(
                                  DISTINCT jsonb_build_object(
@@ -266,6 +267,7 @@ class PostgresExtractor:
                                 for genre in row["genres"]
                             ],
                             updated_at=row["updated_at"],
+                            creation_date=row["creation_date"],
                         ),
                     )
 

@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from pydantic import BaseModel
@@ -25,3 +26,4 @@ class FilmEsDocument(BaseModel):
     directors: list[EsPerson]
     actors: list[EsPerson]
     writers: list[EsPerson]
+    creation_date: datetime.date

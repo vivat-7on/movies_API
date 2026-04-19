@@ -31,6 +31,7 @@ class FilmWorkDTO:
     persons: list[FilmPersonDTO]
     genres: list[GenreDTO]
     updated_at: datetime.datetime | None
+    creation_date: datetime.date
 
 
 @dataclass
