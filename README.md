@@ -18,6 +18,15 @@
    - Использует Redis для кэширования
    - Поддерживает фильтрацию, сортировку и пагинацию
 
+3. **Сервис аутентификации**
+   - Регистрация пользователя
+   - Login (access + refresh токены)
+   - Обновление access-токена
+   - Logout
+   - Logout всех устройств (через token_version)
+   
+   Подробнее см.: `auth/README.md`  
+
 ---
 
 ## Используемые технологии
@@ -30,6 +39,9 @@
 - **Docker / Docker Compose**
 - **AsyncElasticsearch**
 - **Pydantic v2**
+- **JWT (python-jose)**
+- **SQLAlchemy (async)**
+- **pytest**
 
 ---
 

@@ -29,11 +29,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=config.PROJECT_NAME,
-    docs_url="/api/openapi",
-    openapi_url="/api/openapi.json",
+    docs_url="/docs",
+    openapi_url="/openapi.json",
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
 
 app.include_router(films.router, prefix="/api/v1/films", tags=["films"])
 app.include_router(persons.router, prefix="/api/v1/persons", tags=["persons"])

@@ -10,4 +10,4 @@ COPY . .
 
 RUN pip install -e .
 
-CMD ["uvicorn", "auth.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn auth.main:app --host 0.0.0.0 --port 8000"]

@@ -12,8 +12,8 @@ services:
       - movies-postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: [
-              "CMD-SHELL",
-              "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"
+        "CMD-SHELL",
+        "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"
       ]
       interval: 5s
       timeout: 5s
@@ -76,7 +76,7 @@ services:
       interval: 1s
       timeout: 3s
       retries: 5
-    command: ["redis-server"]
+    command: [ "redis-server" ]
 
   api:
     build:
@@ -92,6 +92,18 @@ services:
       cache:
         condition: service_healthy
 
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    container_name: auth_api
+    restart: always
+    env_file:
+      - ./auth/.env
+    depends_on:
+      db:
+        condition: service_healthy
+
   gateway:
     build:
       context: ./nginx
@@ -102,11 +114,7 @@ services:
       - "80:80"
     depends_on:
       - api
-    healthcheck:
-      test: [ "CMD", "wget", "-qO-", "http://localhost" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      - auth
 
 volumes:
   movies-postgres-data:

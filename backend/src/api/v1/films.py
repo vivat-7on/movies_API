@@ -1,8 +1,7 @@
 from http import HTTPStatus
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
-from fastapi.params import Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models.schemas import (
     FilmListResponse,
     FilmResponse,
@@ -38,7 +37,7 @@ async def films_search(
             FilmShort(
                 uuid=film.id,
                 title=film.title,
-                imdb_rating=film.imdb_rating,
+                imdb_rating=film.imdb_rating or 0.0,
             )
             for film in films
         ],
@@ -89,7 +88,7 @@ async def film_list(
             FilmShort(
                 uuid=film.id,
                 title=film.title,
-                imdb_rating=film.imdb_rating,
+                imdb_rating=film.imdb_rating or 0.0,
             )
             for film in films
         ],

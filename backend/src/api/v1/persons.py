@@ -1,8 +1,6 @@
 from uuid import UUID
 
-from auth.api import PaginationQuery, PersonSortOptions, create_person_service
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.params import Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from models.schemas import (
     FilmListResponse,
     FilmShort,
@@ -10,6 +8,10 @@ from models.schemas import (
     PersonResponse,
 )
 from services.person import PersonService
+
+from api.v1.container import create_person_service
+from api.v1.dependencies.pagination import PaginationQuery
+from api.v1.sorting import PersonSortOptions
 
 router = APIRouter()
 
@@ -64,7 +66,7 @@ async def persons_film(
             FilmShort(
                 uuid=film.id,
                 title=film.title,
-                imdb_rating=film.imdb_rating,
+                imdb_rating=film.imdb_rating or 0.0,
             )
             for film in films
         ],
