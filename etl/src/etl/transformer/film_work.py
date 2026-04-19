@@ -1,3 +1,4 @@
+import datetime
 from enum import StrEnum
 
 from etl.dto.dto import FilmWorkDTO
@@ -28,6 +29,6 @@ def transform_film_work(film_work: FilmWorkDTO) -> FilmEsDocument:
         directors=[EsPerson(id=p.id, name=p.full_name) for p in directors],
         actors=[EsPerson(id=p.id, name=p.full_name) for p in actors],
         writers=[EsPerson(id=p.id, name=p.full_name) for p in writers],
-        creation_date=film_work.creation_date,
+        creation_date=film_work.creation_date or datetime.date(1900, 1, 1),
     )
     return document

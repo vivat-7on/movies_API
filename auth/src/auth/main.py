@@ -4,7 +4,7 @@ from auth.api.v1 import auth, roles, users
 
 app = FastAPI(
     docs_url="/docs",
-    openapi_url="/openapi.json",
+    openapi_url="/auth/openapi.json",
 )
 
 
