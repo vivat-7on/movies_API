@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -25,7 +26,7 @@ class TokenService:
         )
 
     def generate_refresh_token(self) -> str:
-        return uuid.uuid4().hex
+        return secrets.token_urlsafe(32)
 
     def build_claim(
         self,

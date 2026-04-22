@@ -1,15 +1,19 @@
-from pydantic.v1 import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DBSettings(BaseSettings):
+class BaseConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+    )
+
+
+class DBSettings(BaseConfig):
     POSTGRES_USER: str
     POSTGRES_DB: str
     POSTGRES_PASSWORD: str
     POSTGRES_HOST: str
     POSTGRES_PORT: int
-
-    class Config:
-        env_file = ".env"
 
     @property
     def async_url(self) -> str:
@@ -28,12 +32,10 @@ class DBSettings(BaseSettings):
         )
 
 
-class AuthSettings(BaseSettings):
+class AuthSettings(BaseConfig):
     JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str
-    ACCESS_TOKEN_TTL_MINUTES: int
-    REFRESH_TOKEN_TTL_DAYS: int
-    DEFAULT_ROLE_NAME: str
-
-    class Config:
-        env_file = ".env"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_TTL_MINUTES: int = 10
+    REFRESH_TOKEN_TTL_DAYS: int = 7
+    DEFAULT_ROLE_NAME: str = "user"
+    DEBUG: bool = True

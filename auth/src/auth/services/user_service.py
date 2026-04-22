@@ -43,6 +43,10 @@ class UserService:
         if user is None:
             raise UserNotFound()
 
+        role = await self.role_repo.get_by_id(role_id)
+        if role is None:
+            raise RoleNotFound()
+
         await self.user_role_repo.remove_role(user_id, role_id)
 
     async def get_current_user(self, access_token: str) -> UserDTO:
@@ -51,7 +55,7 @@ class UserService:
         try:
             user_id = uuid.UUID(claim.sub)
         except ValueError as exc:
-            raise InvalidCredentials("Invalid user ID in token") from exc
+            raise InvalidCredentials() from exc
 
         user = await self.user_repo.get_by_id(user_id)
         if user is None:

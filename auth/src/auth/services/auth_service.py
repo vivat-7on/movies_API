@@ -6,7 +6,11 @@ from attrs import frozen
 from auth.core.config import AuthSettings
 from auth.core.hashing import hash_password, hash_token, verify_password
 from auth.dtos.token import TokensDTO
-from auth.exceptions.auth import InvalidCredentials
+from auth.exceptions.auth import (
+    EmailAlreadyExists,
+    InvalidCredentials,
+    LoginAlreadyExists,
+)
 from auth.exceptions.role import RoleNotFound
 from auth.ports.refresh_token_repo import IRefreshTokenRepo
 from auth.ports.roles_repo import IRoleRepo
@@ -75,12 +79,12 @@ class AuthService:
         first_name: str | None,
         last_name: str | None,
     ) -> None:
-        user = await self.user_repo.get_by_login(login)
-        if user:
-            raise InvalidCredentials()
+        user_by_login = await self.user_repo.get_by_login(login)
+        if user_by_login:
+            raise LoginAlreadyExists()
 
         if email and await self.user_repo.email_exists(email):
-            raise InvalidCredentials()
+            raise EmailAlreadyExists()
 
         password_hash = hash_password(password)
 
@@ -156,12 +160,15 @@ class AuthService:
             refresh_token=new_refresh_token,
         )
 
-    async def logout(self, refresh_token: str) -> None:
+    async def logout(self, refresh_token: str, user_id: str) -> None:
         refresh_token_hash = hash_token(refresh_token)
         token = await self.refresh_token_repo.get_by_hash(
             refresh_token_hash,
         )
         if token is None:
+            return
+
+        if str(token.user_id) != user_id:
             return
 
         await self.refresh_token_repo.delete(token)

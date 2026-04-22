@@ -99,27 +99,37 @@ def create_user_service(
     )
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     service: UserService = Depends(create_user_service),
 ) -> UserDTO:
-    token = credentials.credentials
-    try:
-        user = await service.get_current_user(token)
-    except InvalidCredentials as exc:
+    if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token = credentials.credentials
+    try:
+        return await service.get_current_user(str(token))
+    except InvalidCredentials as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
         ) from exc
-    return user
 
 
 def require_roles(required_roles: list[str]):
+    if not required_roles:
+        raise ValueError("Required roles cannot be empty")
+
     async def dependency(user: UserDTO = Depends(get_current_user)):
-        if not any(role in user.roles for role in required_roles):
+        user_roles = user.roles or []
+        if not set(required_roles).intersection(user_roles):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Forbidden",

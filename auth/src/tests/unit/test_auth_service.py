@@ -3,7 +3,11 @@ import uuid
 
 import pytest
 from auth.core.hashing import hash_token, verify_password
-from auth.exceptions.auth import InvalidCredentials
+from auth.exceptions.auth import (
+    EmailAlreadyExists,
+    InvalidCredentials,
+    LoginAlreadyExists,
+)
 from auth.exceptions.role import RoleNotFound
 from auth.models.models import RefreshToken
 
@@ -105,7 +109,7 @@ async def test_user_registration(
 
 @pytest.mark.asyncio
 async def test_user_registration_login_exists(auth_service):
-    with pytest.raises(InvalidCredentials):
+    with pytest.raises(LoginAlreadyExists):
         login = LOGIN
         password = PASSWORD
         email = "test_email"
@@ -122,8 +126,8 @@ async def test_user_registration_login_exists(auth_service):
 
 @pytest.mark.asyncio
 async def test_user_registration_email_exists(auth_service):
-    with pytest.raises(InvalidCredentials):
-        login = LOGIN
+    with pytest.raises(EmailAlreadyExists):
+        login = "new_login"
         password = PASSWORD
         email = "existing_email"
         first_name = "test_first_name"
@@ -272,7 +276,7 @@ async def test_logout_success(auth_service, refresh_token_repo):
     )
     assert refresh_token_repo.deleted_token is None
     refresh_token_repo.token = refresh_token
-    await auth_service.logout(token_row)
+    await auth_service.logout(token_row, str(USER_ID))
     assert refresh_token_repo.deleted_token is not None
     assert refresh_token_repo.deleted_token.token_hash == hashed_token
     assert refresh_token_repo.deleted_token.user_id == USER_ID
@@ -282,7 +286,7 @@ async def test_logout_success(auth_service, refresh_token_repo):
 async def test_logout_idempotent(auth_service, refresh_token_repo):
     refresh_token_repo.token = None
 
-    await auth_service.logout("random_token")
+    await auth_service.logout("random_token", str(USER_ID))
 
 
 @pytest.mark.asyncio

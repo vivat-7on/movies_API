@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class LoginRequest(BaseModel):
@@ -10,9 +10,9 @@ class LoginRequest(BaseModel):
     )
     password: str = Field(
         ...,
-        min_length=5,
-        max_length=50,
-        description="Пароль, от 5 до 50 знаков",
+        min_length=8,
+        max_length=128,
+        description="Пароль, от 8 до 128 знаков",
     )
 
 
@@ -22,15 +22,33 @@ class TokenResponse(BaseModel):
 
 
 class UserRegistrationRequest(BaseModel):
-    login: str
-    password: str
-    email: str | None
-    first_name: str | None
-    last_name: str | None
+    login: str = Field(
+        ...,
+        min_length=3,
+        max_length=50,
+        description="Логин, от 3 до 50 знаков",
+    )
+    password: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="Пароль, от 8 до 128 знаков",
+    )
+    email: EmailStr | None = Field(default=None, description="Email пользователя")
+    first_name: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Имя",
+    )
+    last_name: str | None = Field(
+        default=None,
+        max_length=50,
+        description="Фамилия",
+    )
 
 
 class RefreshTokenRequest(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(min_length=10)
 
 
 class UserResponse(BaseModel):
@@ -39,7 +57,7 @@ class UserResponse(BaseModel):
 
 
 class RoleRequest(BaseModel):
-    role_name: str
+    role_name: str = Field(..., min_length=2, max_length=50)
 
 
 class RoleResponse(BaseModel):
