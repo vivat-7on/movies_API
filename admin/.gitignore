@@ -1,0 +1,77 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg-info/
+*.manifest
+*.spec
+
+# Virtual env
+venv/
+.env/
+.env.*
+.env
+
+
+# ---- Django ----
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+static/
+.tmp/
+local_settings.py
+
+# ---- Vim / Neovim ----
+*.swp
+*.swo
+*.swm
+*.swn
+*~
+
+
+# ---- PyCharm / VSCode ----
+.idea/
+.vscode/
+*.iml
+
+# ---- Docker ----
+docker-compose.override.yml
+*.pid
+*.seed
+*.sql.gz
+
+# ---- System files ----
+.DS_Store
+Thumbs.db
+
+# ---- Coverage / Testing ----
+htmlcov/
+.coverage
+.coverage.*
+.cache
+pytestcache/
+.pytest_cache/
+
+# ---- Build artifacts ----
+dist/
+build/
+*.egg
+*.egg-info/
+
+
+# ---- PostgreSQL dump files ----
+*.sql
+*.backup
+*.dump
+
+
+# ---- Other common junk ----
+*.bak
+*.tmp
+*.temp
+*.orig

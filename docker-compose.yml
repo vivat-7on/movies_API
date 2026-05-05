@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16
@@ -110,13 +108,31 @@ services:
       dockerfile: Dockerfile
     container_name: movies_gateway
     restart: always
+    volumes:
+      - static-volume:/static
     ports:
       - "80:80"
     depends_on:
       - api
       - auth
+      - admin
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    container_name: admin
+    restart: always
+    env_file:
+      - ./admin/.env
+    volumes:
+      - static-volume:/app/staticfiles
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   movies-postgres-data:
   movies-es-data:
   movies-etl-state:
+  static-volume:
