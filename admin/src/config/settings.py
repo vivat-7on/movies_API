@@ -11,6 +11,15 @@ include("components/database.py")
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 DEBUG = os.environ.get("DEBUG", False) == "True"
+AUTH_API_LOGIN_URL = os.environ.get(
+    "AUTH_API_LOGIN_URL",
+    "http://auth:8000/api/v1/auth/login",
+)
+AUTH_API_ME_URL = os.environ.get(
+    "AUTH_API_ME_URL",
+    "http://auth:8000/api/v1/auth/me",
+)
+AUTH_API_TIMEOUT = float(os.environ.get("AUTH_API_TIMEOUT", 2))
 
 ALLOWED_HOSTS = os.environ.get(
     "DJANGO_ALLOWED_HOSTS",
@@ -36,6 +45,9 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+AUTHENTICATION_BACKENDS = ["movies.auth.CustomBackend"]
+
 
 ROOT_URLCONF = "config.urls"
 
@@ -82,3 +94,4 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOCALE_PATHS = ["movies/locale"]
+AUTH_USER_MODEL = "movies.User"

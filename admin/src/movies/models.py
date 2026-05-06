@@ -1,7 +1,10 @@
 import uuid
 
+from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+from movies.manager import MyUserManager
 
 
 class UUIDMixin(models.Model):
@@ -127,3 +130,29 @@ class PersonFilmWork(UUIDMixin, TimestampMixin):
     class Meta:
         managed = False
         db_table = 'content"."person_film_work'
+
+
+class User(AbstractBaseUser, UUIDMixin, TimestampMixin):
+    login = models.CharField(unique=True, max_length=255)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
+    email = models.EmailField(max_length=255, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
+
+    @property
+    def is_staff(self):
+        return self.is_admin
+
+    USERNAME_FIELD = "login"
+
+    objects = MyUserManager()
+
+    def __str__(self):
+        return f"{self.login} {self.id}"
+
+    def has_perm(self, perm, obj=None):
+        return True
+
+    def has_module_perms(self, app_label):
+        return True

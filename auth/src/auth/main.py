@@ -10,7 +10,7 @@ DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
 app = FastAPI(
     docs_url="/docs" if DEBUG else None,
-    openapi_url="/openapi.json" if DEBUG else None,
+    openapi_url="/auth/openapi.json" if DEBUG else None,
 )
 
 
