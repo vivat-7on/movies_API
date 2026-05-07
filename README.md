@@ -43,6 +43,10 @@ Auth-сервис инструментирован через OpenTelemetry.
 Jaeger UI доступен на http://localhost:16686.
 Nginx генерирует X-Request-Id и добавляет его в access logs.
 
+Rate limiting реализован на уровне Nginx через limit_req.
+Для Auth API используется ограничение по IP клиента.
+При превышении лимита возвращается 429 Too Many Requests.
+
 ## Используемые технологии
 
 - **Python 3.11**
