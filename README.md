@@ -38,6 +38,11 @@
    - Статические файлы собираются в volume и отдаются через Nginx
 ---
 
+Auth-сервис инструментирован через OpenTelemetry.
+Трейсы отправляются в Jaeger по OTLP gRPC.
+Jaeger UI доступен на http://localhost:16686.
+Nginx генерирует X-Request-Id и добавляет его в access logs.
+
 ## Используемые технологии
 
 - **Python 3.11**

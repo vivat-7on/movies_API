@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=config.PROJECT_NAME,
-    docs_url="/docs",
+    docs_url="/movies/docs",
     openapi_url="/movies/openapi.json",
     default_response_class=ORJSONResponse,
     lifespan=lifespan,
