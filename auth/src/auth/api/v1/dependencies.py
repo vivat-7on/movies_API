@@ -2,23 +2,23 @@ from functools import lru_cache
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-)
+from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from auth.core.config import AuthSettings, DBSettings
+from auth.core.config import AuthSettings, DBSettings, YandexAuthSettings
 from auth.db.session import get_session
 from auth.dtos.token import UserDTO
 from auth.exceptions.auth import InvalidCredentials
 from auth.repositories.refresh_token_repo import RefreshTokenRepo
 from auth.repositories.roles_repo import RoleRepo
+from auth.repositories.social_account_repo import SocialAccountRepo
 from auth.repositories.user_repo import UserRepo
 from auth.repositories.user_role_repo import UserRoleRepo
 from auth.services.auth_service import AuthService
 from auth.services.role_service import RoleService
 from auth.services.token_service import TokenService
 from auth.services.user_service import UserService
+from auth.services.yandex import YandexClient
 
 
 @lru_cache
@@ -29,6 +29,22 @@ def get_db_settings():
 @lru_cache
 def get_auth_settings() -> AuthSettings:
     return AuthSettings()
+
+
+def get_yandex_auth_settings() -> YandexAuthSettings:
+    return YandexAuthSettings()
+
+
+def create_yandex_client(
+    yandex_auth_settings=Depends(get_yandex_auth_settings),
+) -> YandexClient:
+    return YandexClient(yandex_auth_settings=yandex_auth_settings)
+
+
+def create_social_account(
+    session=Depends(get_session),
+) -> SocialAccountRepo:
+    return SocialAccountRepo(session=session)
 
 
 def create_user_repo(
@@ -68,6 +84,9 @@ def create_auth_service(
     auth_settings: AuthSettings = Depends(get_auth_settings),
     role_repo: RoleRepo = Depends(create_role_repo),
     user_role_repo: UserRoleRepo = Depends(create_user_role_repo),
+    yandex_client: YandexClient = Depends(create_yandex_client),
+    social_account_repo: SocialAccountRepo = Depends(create_social_account),
+    session: AsyncSession = Depends(get_session),
 ) -> AuthService:
     return AuthService(
         user_repo=user_repo,
@@ -76,6 +95,9 @@ def create_auth_service(
         auth_settings=auth_settings,
         role_repo=role_repo,
         user_role_repo=user_role_repo,
+        yandex_client=yandex_client,
+        social_account_repo=social_account_repo,
+        session=session,
     )
 
 

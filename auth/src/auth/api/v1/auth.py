@@ -1,12 +1,16 @@
+import secrets
 import uuid
+from urllib.parse import urlencode
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from starlette import status
 from starlette.requests import Request
 
 from auth.api.v1.dependencies import (
     create_auth_service,
     get_current_user,
+    get_yandex_auth_settings,
     require_roles,
 )
 from auth.api.v1.schemas import (
@@ -16,6 +20,7 @@ from auth.api.v1.schemas import (
     UserRegistrationRequest,
     UserResponse,
 )
+from auth.core.config import YandexAuthSettings
 from auth.dtos.token import UserDTO
 from auth.services.auth_service import AuthService
 
@@ -102,3 +107,45 @@ async def logout_all(
 @router.get("/admin")
 async def admin_panel(user: UserDTO = Depends(require_roles(["admin"]))):
     return {"message": "Welcome admin"}
+
+
+@router.get("/yandex/login")
+async def yandex_login(
+    settings: YandexAuthSettings = Depends(get_yandex_auth_settings),
+) -> RedirectResponse:
+    state = secrets.token_urlsafe(32)
+    params = {
+        "response_type": "code",
+        "client_id": settings.YANDEX_CLIENT_ID,
+        "redirect_uri": settings.YANDEX_REDIRECT_URI,
+        "state": state,
+    }
+
+    url = f"{settings.YANDEX_AUTHORIZE_URI}?{urlencode(params)}"
+    return RedirectResponse(url=url)
+
+
+@router.get("/yandex/callback", response_model=TokenResponse)
+async def yandex_callback(
+    request: Request,
+    state: str,
+    code: str,
+    error: str | None = None,
+    service: AuthService = Depends(create_auth_service),
+) -> TokenResponse:
+    if error:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error,
+        )
+    user_agent = request.headers.get("User-Agent", None)
+    tokens = await service.login_with_yandex(
+        code=code,
+        state=state,
+        user_agent=user_agent,
+    )
+
+    return TokenResponse(
+        access_token=tokens.access_token,
+        refresh_token=tokens.refresh_token,
+    )

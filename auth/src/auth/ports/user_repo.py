@@ -14,10 +14,10 @@ class IUserRepo(Protocol):
     async def create(
         self,
         login: str,
-        password_hash: str,
-        email: str | None,
-        first_name: str | None,
-        last_name: str | None,
+        password_hash: str | None = None,
+        email: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
     ) -> User: ...
 
     async def increase_token_version(self, user_id: uuid.UUID) -> None: ...

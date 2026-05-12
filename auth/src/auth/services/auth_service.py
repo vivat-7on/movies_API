@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 from attrs import frozen
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.core.config import AuthSettings
 from auth.core.hashing import hash_password, hash_token, verify_password
@@ -14,9 +15,11 @@ from auth.exceptions.auth import (
 from auth.exceptions.role import RoleNotFound
 from auth.ports.refresh_token_repo import IRefreshTokenRepo
 from auth.ports.roles_repo import IRoleRepo
+from auth.ports.social_account_repo import ISocialAccountRepo
 from auth.ports.user_repo import IUserRepo
 from auth.ports.user_role_repo import IUserRoleRepo
 from auth.services.token_service import TokenService
+from auth.services.yandex import YandexClient
 
 
 @frozen
@@ -27,6 +30,9 @@ class AuthService:
     auth_settings: AuthSettings
     role_repo: IRoleRepo
     user_role_repo: IUserRoleRepo
+    social_account_repo: ISocialAccountRepo
+    yandex_client: YandexClient
+    session: AsyncSession
 
     async def login(
         self,
@@ -36,6 +42,9 @@ class AuthService:
     ) -> TokensDTO:
         user = await self.user_repo.get_by_login(login)
         if user is None:
+            raise InvalidCredentials()
+
+        if user.password_hash is None:
             raise InvalidCredentials()
 
         if not verify_password(password, user.password_hash):
@@ -178,3 +187,97 @@ class AuthService:
         if user is None:
             raise InvalidCredentials()
         await self.user_repo.increase_token_version(user_id=user.id)
+
+    async def login_with_yandex(
+        self,
+        code: str,
+        state: str,
+        user_agent: str | None = None,
+    ) -> TokensDTO:
+        yandex_tokens = await self.yandex_client.exchange_code_for_token(
+            code=code,
+        )
+        if yandex_tokens is None:
+            raise InvalidCredentials()
+
+        yandex_token = yandex_tokens.access_token
+        user_info = await self.yandex_client.get_user_info(
+            yandex_token=yandex_token,
+        )
+        if user_info is None:
+            raise InvalidCredentials()
+
+        async with self.session.begin():
+            social = await self.social_account_repo.get_by_provider_and_social_id(
+                social_id=user_info.id,
+                provider="yandex",
+            )
+
+            if social:
+                user = await self.user_repo.get_by_id(social.user_id)
+                if user is None:
+                    raise InvalidCredentials()
+            else:
+                if user_info.default_email and await self.user_repo.email_exists(
+                    email=user_info.default_email,
+                ):
+                    raise EmailAlreadyExists()
+
+                user = await self.user_repo.create(
+                    login=f"yandex_{user_info.id}",
+                    password_hash=None,
+                    email=user_info.default_email,
+                    first_name=user_info.first_name,
+                    last_name=user_info.last_name,
+                )
+
+                role_id = await self.role_repo.get_id_by_name(
+                    name=self.auth_settings.DEFAULT_ROLE_NAME,
+                )
+
+                if role_id is None:
+                    raise RoleNotFound()
+
+                await self.user_role_repo.assign_role(
+                    role_id=role_id,
+                    user_id=user.id,
+                )
+
+                await self.social_account_repo.create(
+                    user_id=user.id,
+                    social_id=user_info.id,
+                    provider="yandex",
+                )
+
+            roles = await self.role_repo.get_by_user_id(user_id=user.id) or []
+
+            refresh_token = self.token_service.generate_refresh_token()
+
+            now = datetime.now(tz=timezone.utc)
+            refresh_token_expires_at = now + timedelta(
+                days=self.auth_settings.REFRESH_TOKEN_TTL_DAYS,
+            )
+
+            await self.refresh_token_repo.save(
+                refresh_token_hash=hash_token(refresh_token),
+                user_id=user.id,
+                expires_at=refresh_token_expires_at,
+                user_agent=user_agent,
+            )
+            user_id = user.id
+            token_version = user.token_version
+
+        claim = self.token_service.build_claim(
+            user_id=user_id,
+            roles=roles,
+            token_version=token_version,
+        )
+
+        access_token = self.token_service.generate_access_token(
+            claim=claim,
+        )
+
+        return TokensDTO(
+            access_token=access_token,
+            refresh_token=refresh_token,
+        )

@@ -40,3 +40,12 @@ class AuthSettings(BaseConfig):
     REFRESH_TOKEN_TTL_DAYS: int = 7
     DEFAULT_ROLE_NAME: str = "user"
     DEBUG: bool = True
+
+
+class YandexAuthSettings(BaseConfig):
+    YANDEX_AUTHORIZE_URI: str
+    YANDEX_TOKEN_URI: str
+    YANDEX_USER_INFO_URI: str
+    YANDEX_CLIENT_ID: str
+    YANDEX_CLIENT_SECRET: str
+    YANDEX_REDIRECT_URI: str

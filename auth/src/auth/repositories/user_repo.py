@@ -29,10 +29,10 @@ class UserRepo(IUserRepo):
     async def create(
         self,
         login: str,
-        password_hash: str,
-        email: str | None,
-        first_name: str | None,
-        last_name: str | None,
+        password_hash: str | None = None,
+        email: str | None = None,
+        first_name: str | None = None,
+        last_name: str | None = None,
     ) -> User:
         user = User(
             login=login,

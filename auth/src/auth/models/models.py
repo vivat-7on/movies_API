@@ -17,7 +17,7 @@ class User(Base):
         nullable=False,
         index=True,
     )
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=True)
 
     first_name: Mapped[str | None] = mapped_column(String(50))
     last_name: Mapped[str | None] = mapped_column(String(50))
@@ -89,3 +89,27 @@ class LoginHistory(Base):
         index=True,
     )
     user_agent: Mapped[str | None] = mapped_column(String(255))
+
+
+class SocialAccount(Base):
+    __tablename__ = "social_accounts"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    social_id: Mapped[str] = mapped_column(nullable=False)
+    provider: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "provider",
+            name="soccial_account_unique",
+        ),
+    )
