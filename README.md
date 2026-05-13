@@ -2,6 +2,8 @@
 
 Проект представляет собой сервис для загрузки данных о фильмах, жанрах и персоналиях из PostgreSQL в Elasticsearch (ETL), а также HTTP API для получения этих данных через FastAPI с кэшированием в Redis.
 
+---
+
 ## Архитектура
 
 Проект состоит из нескольких микросервисов, объединённых через Nginx gateway:
@@ -36,16 +38,57 @@
    - Не управляет схемой базы данных (managed = False)
    - Использует встроенный Django Admin
    - Статические файлы собираются в volume и отдаются через Nginx
+   
 ---
 
-Auth-сервис инструментирован через OpenTelemetry.
-Трейсы отправляются в Jaeger по OTLP gRPC.
-Jaeger UI доступен на http://localhost:16686.
-Nginx генерирует X-Request-Id и добавляет его в access logs.
+## OAuth авторизация
 
-Rate limiting реализован на уровне Nginx через limit_req.
-Для Auth API используется ограничение по IP клиента.
-При превышении лимита возвращается 429 Too Many Requests.
+Auth-сервис поддерживает вход через Yandex OAuth2.
+
+Flow:
+1. Пользователь переходит на `/api/v1/auth/yandex/login`
+2. Происходит redirect на Yandex OAuth
+3. После успешной авторизации пользователь возвращается на callback endpoint
+4. Auth-сервис создаёт локального пользователя и выдаёт JWT токены
+
+Для защиты используется OAuth state parameter, сохраняемый в Redis.
+
+---
+
+## Graceful degradation
+
+Административная панель не хранит локальные пароли пользователей.
+Авторизация происходит через Auth API.
+
+При недоступности Auth-сервиса:
+- Movies API продолжает работать
+- Admin panel остаётся доступной
+- новые логины становятся невозможны
+
+---
+
+## Rate limiting
+
+Rate limiting реализован на уровне Nginx.
+
+Используется ограничение по IP:
+- Auth API: 5 requests/sec
+- Movies API: 10 requests/sec
+
+При превышении лимита возвращается HTTP 429.
+
+---
+
+## Observability
+
+Используется OpenTelemetry + Jaeger.
+
+Для каждого запроса:
+- генерируется `X-Request-Id`
+- request id прокидывается через Nginx
+- трейсы отправляются в Jaeger через OTLP gRPC
+
+---
 
 ## Используемые технологии
 
@@ -69,5 +112,12 @@ Rate limiting реализован на уровне Nginx через limit_req.
 `docker compose up --build`
 
 ---
+
+## Доступные сервисы
+
+- Movies API docs: http://localhost/movies/docs
+- Auth API docs: http://localhost/auth/docs
+- Django Admin: http://localhost/admin
+- Jaeger UI: http://localhost:16686
 
 ---
