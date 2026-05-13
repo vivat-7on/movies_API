@@ -9,6 +9,12 @@ from auth.exceptions.auth import (
 )
 from auth.exceptions.role import RoleAlreadyExist, RoleNotFound
 from auth.exceptions.user import UserNotFound
+from auth.exceptions.yandex_oauth import (
+    InvalidOAuthState,
+    LinkedYandexUserNotFound,
+    YandexTokenExchangeFailed,
+    YandexUserInfoFailed,
+)
 
 
 def build_response(status_code: int, detail: str) -> JSONResponse:
@@ -77,4 +83,44 @@ def setup_exception_handlers(app: FastAPI) -> None:
         return build_response(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
+        )
+
+    @app.exception_handler(InvalidOAuthState)
+    async def invalid_oauth_state_handler(
+        request: Request,
+        exc: InvalidOAuthState,
+    ):
+        return build_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid OAuth state",
+        )
+
+    @app.exception_handler(YandexTokenExchangeFailed)
+    async def yandex_token_exchange_failed_handler(
+        request: Request,
+        exc: YandexTokenExchangeFailed,
+    ):
+        return build_response(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Yandex token exchange failed",
+        )
+
+    @app.exception_handler(YandexUserInfoFailed)
+    async def yandex_user_info_failed_handler(
+        request: Request,
+        exc: YandexUserInfoFailed,
+    ):
+        return build_response(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Yandex user info failed",
+        )
+
+    @app.exception_handler(LinkedYandexUserNotFound)
+    async def linked_yandex_user_not_found_handler(
+        request: Request,
+        exc: LinkedYandexUserNotFound,
+    ):
+        return build_response(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Linked Yandex user not found",
         )

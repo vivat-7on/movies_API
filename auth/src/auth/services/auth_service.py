@@ -13,11 +13,16 @@ from auth.exceptions.auth import (
     LoginAlreadyExists,
 )
 from auth.exceptions.role import RoleNotFound
-from auth.ports.refresh_token_repo import IRefreshTokenRepo
-from auth.ports.roles_repo import IRoleRepo
-from auth.ports.social_account_repo import ISocialAccountRepo
-from auth.ports.user_repo import IUserRepo
-from auth.ports.user_role_repo import IUserRoleRepo
+from auth.exceptions.yandex_oauth import (
+    LinkedYandexUserNotFound,
+    YandexTokenExchangeFailed,
+    YandexUserInfoFailed,
+)
+from auth.ports.db.refresh_token_repo import IRefreshTokenRepo
+from auth.ports.db.roles_repo import IRoleRepo
+from auth.ports.db.social_account_repo import ISocialAccountRepo
+from auth.ports.db.user_repo import IUserRepo
+from auth.ports.db.user_role_repo import IUserRoleRepo
 from auth.services.token_service import TokenService
 from auth.services.yandex import YandexClient
 
@@ -191,21 +196,20 @@ class AuthService:
     async def login_with_yandex(
         self,
         code: str,
-        state: str,
         user_agent: str | None = None,
     ) -> TokensDTO:
         yandex_tokens = await self.yandex_client.exchange_code_for_token(
             code=code,
         )
         if yandex_tokens is None:
-            raise InvalidCredentials()
+            raise YandexTokenExchangeFailed()
 
         yandex_token = yandex_tokens.access_token
         user_info = await self.yandex_client.get_user_info(
             yandex_token=yandex_token,
         )
         if user_info is None:
-            raise InvalidCredentials()
+            raise YandexUserInfoFailed()
 
         async with self.session.begin():
             social = await self.social_account_repo.get_by_provider_and_social_id(
@@ -216,7 +220,7 @@ class AuthService:
             if social:
                 user = await self.user_repo.get_by_id(social.user_id)
                 if user is None:
-                    raise InvalidCredentials()
+                    raise LinkedYandexUserNotFound()
             else:
                 if user_info.default_email and await self.user_repo.email_exists(
                     email=user_info.default_email,

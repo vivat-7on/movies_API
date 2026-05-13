@@ -6,9 +6,9 @@ from auth.dtos.token import UserDTO
 from auth.exceptions.auth import InvalidCredentials
 from auth.exceptions.role import RoleNotFound
 from auth.exceptions.user import UserNotFound
-from auth.ports.roles_repo import IRoleRepo
-from auth.ports.user_repo import IUserRepo
-from auth.ports.user_role_repo import IUserRoleRepo
+from auth.ports.db.roles_repo import IRoleRepo
+from auth.ports.db.user_repo import IUserRepo
+from auth.ports.db.user_role_repo import IUserRoleRepo
 from auth.services.token_service import TokenService
 
 

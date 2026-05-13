@@ -4,7 +4,7 @@ from sqlalchemy import exists, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import User
-from auth.ports.user_repo import IUserRepo
+from auth.ports.db.user_repo import IUserRepo
 
 
 class UserRepo(IUserRepo):

@@ -4,7 +4,7 @@ from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import Role, UserRole
-from auth.ports.roles_repo import IRoleRepo
+from auth.ports.db.roles_repo import IRoleRepo
 
 
 class RoleRepo(IRoleRepo):

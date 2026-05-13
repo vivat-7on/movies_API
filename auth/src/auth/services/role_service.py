@@ -3,7 +3,7 @@ import uuid
 from attr import frozen
 
 from auth.exceptions.role import RoleAlreadyExist, RoleNotFound
-from auth.ports.roles_repo import IRoleRepo
+from auth.ports.db.roles_repo import IRoleRepo
 
 
 @frozen

@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.responses import ORJSONResponse
@@ -13,8 +14,11 @@ from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
 )
+from redis.asyncio import Redis
 
 from auth.api.v1 import auth, roles, users
+from auth.api.v1.dependencies import get_redis_settings
+from auth.cache.redis_client import reset_redis_client, set_redis_client
 from auth.core.exception_handlers import setup_exception_handlers
 
 DEBUG = os.getenv("DEBUG", "true").lower() == "true"
@@ -35,9 +39,27 @@ def configure_tracer() -> None:
 
 configure_tracer()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    redis_settings = get_redis_settings()
+    redis = Redis(
+        host=redis_settings.REDIS_HOST,
+        port=redis_settings.REDIS_PORT,
+        decode_responses=True,
+    )
+    await redis.ping()
+    set_redis_client(redis)
+
+    yield
+    await redis.close()
+    reset_redis_client()
+
+
 app = FastAPI(
     docs_url="/auth/docs" if DEBUG else None,
     openapi_url="/auth/openapi.json" if DEBUG else None,
+    lifespan=lifespan,
 )
 
 FastAPIInstrumentor().instrument_app(app)

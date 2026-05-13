@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import SocialAccount
-from auth.ports.social_account_repo import ISocialAccountRepo
+from auth.ports.db.social_account_repo import ISocialAccountRepo
 
 
 class SocialAccountRepo(ISocialAccountRepo):

@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import UserRole
-from auth.ports.user_role_repo import IUserRoleRepo
+from auth.ports.db.user_role_repo import IUserRoleRepo
 
 
 class UserRoleRepo(IUserRoleRepo):

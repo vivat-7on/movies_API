@@ -5,17 +5,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
-from auth.core.config import AuthSettings, DBSettings, YandexAuthSettings
+from auth.cache.redis_client import get_redis
+from auth.core.config import (
+    AuthSettings,
+    DBSettings,
+    RedisSettings,
+    YandexAuthSettings,
+)
 from auth.db.session import get_session
 from auth.dtos.token import UserDTO
 from auth.exceptions.auth import InvalidCredentials
-from auth.repositories.refresh_token_repo import RefreshTokenRepo
-from auth.repositories.roles_repo import RoleRepo
-from auth.repositories.social_account_repo import SocialAccountRepo
-from auth.repositories.user_repo import UserRepo
-from auth.repositories.user_role_repo import UserRoleRepo
+from auth.repositories.cache.state import CacheStateRepo
+from auth.repositories.db.refresh_token_repo import RefreshTokenRepo
+from auth.repositories.db.roles_repo import RoleRepo
+from auth.repositories.db.social_account_repo import SocialAccountRepo
+from auth.repositories.db.user_repo import UserRepo
+from auth.repositories.db.user_role_repo import UserRoleRepo
 from auth.services.auth_service import AuthService
 from auth.services.role_service import RoleService
+from auth.services.state_service import OAuthStateService
 from auth.services.token_service import TokenService
 from auth.services.user_service import UserService
 from auth.services.yandex import YandexClient
@@ -33,6 +41,10 @@ def get_auth_settings() -> AuthSettings:
 
 def get_yandex_auth_settings() -> YandexAuthSettings:
     return YandexAuthSettings()
+
+
+def get_redis_settings() -> RedisSettings:
+    return RedisSettings()
 
 
 def create_yandex_client(
@@ -77,6 +89,12 @@ def create_user_role_repo(
     return UserRoleRepo(session=session)
 
 
+def create_cache_state_repo(
+    redis=Depends(get_redis),
+) -> CacheStateRepo:
+    return CacheStateRepo(redis=redis)
+
+
 def create_auth_service(
     user_repo: UserRepo = Depends(create_user_repo),
     refresh_token_repo: RefreshTokenRepo = Depends(create_refresh_token_repo),
@@ -119,6 +137,12 @@ def create_user_service(
         user_role_repo=user_role_repo,
         token_service=token_service,
     )
+
+
+def create_oauth_state_service(
+    cache: CacheStateRepo = Depends(create_cache_state_repo),
+) -> OAuthStateService:
+    return OAuthStateService(cache=cache)
 
 
 security = HTTPBearer(auto_error=False)

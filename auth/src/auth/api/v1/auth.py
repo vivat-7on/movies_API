@@ -1,4 +1,3 @@
-import secrets
 import uuid
 from urllib.parse import urlencode
 
@@ -9,6 +8,7 @@ from starlette.requests import Request
 
 from auth.api.v1.dependencies import (
     create_auth_service,
+    create_oauth_state_service,
     get_current_user,
     get_yandex_auth_settings,
     require_roles,
@@ -23,6 +23,7 @@ from auth.api.v1.schemas import (
 from auth.core.config import YandexAuthSettings
 from auth.dtos.token import UserDTO
 from auth.services.auth_service import AuthService
+from auth.services.state_service import OAuthStateService
 
 router = APIRouter()
 
@@ -112,15 +113,17 @@ async def admin_panel(user: UserDTO = Depends(require_roles(["admin"]))):
 @router.get("/yandex/login")
 async def yandex_login(
     settings: YandexAuthSettings = Depends(get_yandex_auth_settings),
+    state_service: OAuthStateService = Depends(
+        create_oauth_state_service,
+    ),
 ) -> RedirectResponse:
-    state = secrets.token_urlsafe(32)
+    state = await state_service.create_state()
     params = {
         "response_type": "code",
         "client_id": settings.YANDEX_CLIENT_ID,
         "redirect_uri": settings.YANDEX_REDIRECT_URI,
         "state": state,
     }
-
     url = f"{settings.YANDEX_AUTHORIZE_URI}?{urlencode(params)}"
     return RedirectResponse(url=url)
 
@@ -131,20 +134,22 @@ async def yandex_callback(
     state: str,
     code: str,
     error: str | None = None,
-    service: AuthService = Depends(create_auth_service),
+    auth_service: AuthService = Depends(create_auth_service),
+    state_service: OAuthStateService = Depends(
+        create_oauth_state_service,
+    ),
 ) -> TokenResponse:
     if error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=error,
         )
+    await state_service.validate_state(state)
     user_agent = request.headers.get("User-Agent", None)
-    tokens = await service.login_with_yandex(
+    tokens = await auth_service.login_with_yandex(
         code=code,
-        state=state,
         user_agent=user_agent,
     )
-
     return TokenResponse(
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,

@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.models.models import RefreshToken
-from auth.ports.refresh_token_repo import IRefreshTokenRepo
+from auth.ports.db.refresh_token_repo import IRefreshTokenRepo
 
 
 class RefreshTokenRepo(IRefreshTokenRepo):

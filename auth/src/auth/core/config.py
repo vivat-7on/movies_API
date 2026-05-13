@@ -49,3 +49,8 @@ class YandexAuthSettings(BaseConfig):
     YANDEX_CLIENT_ID: str
     YANDEX_CLIENT_SECRET: str
     YANDEX_REDIRECT_URI: str
+
+
+class RedisSettings(BaseConfig):
+    REDIS_PORT: int
+    REDIS_HOST: str
