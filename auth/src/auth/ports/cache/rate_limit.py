@@ -1,0 +1,9 @@
+from typing import Protocol
+
+
+class IRateLimitRepo(Protocol):
+    async def increment_and_get(self, key: str, ttl: int) -> int: ...
+
+    async def get(self, key: str) -> int | None: ...
+
+    async def delete(self, key: str) -> None: ...

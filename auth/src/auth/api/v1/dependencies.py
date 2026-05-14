@@ -15,6 +15,7 @@ from auth.core.config import (
 from auth.db.session import get_session
 from auth.dtos.token import UserDTO
 from auth.exceptions.auth import InvalidCredentials
+from auth.repositories.cache.rate_limit import RateLimitRepo
 from auth.repositories.cache.state import CacheStateRepo
 from auth.repositories.db.refresh_token_repo import RefreshTokenRepo
 from auth.repositories.db.roles_repo import RoleRepo
@@ -23,6 +24,7 @@ from auth.repositories.db.user_repo import UserRepo
 from auth.repositories.db.user_role_repo import UserRoleRepo
 from auth.services.auth_service import AuthService
 from auth.services.oauth_resolver import OAuthProviderResolver
+from auth.services.rate_limit import RateLimitService
 from auth.services.role_service import RoleService
 from auth.services.state_service import OAuthStateService
 from auth.services.token_service import TokenService
@@ -101,6 +103,12 @@ def create_cache_state_repo(
     return CacheStateRepo(redis=redis)
 
 
+def create_rate_limit_repo(
+    redis=Depends(get_redis),
+) -> RateLimitRepo:
+    return RateLimitRepo(redis=redis)
+
+
 def create_yandex_oauth_provider(
     settings: YandexOAuthSettings = Depends(get_yandex_auth_settings),
     client: YandexClient = Depends(create_yandex_client),
@@ -169,6 +177,12 @@ def create_oauth_state_service(
     cache: CacheStateRepo = Depends(create_cache_state_repo),
 ) -> OAuthStateService:
     return OAuthStateService(cache=cache)
+
+
+def create_rate_limit_service(
+    repo: RateLimitRepo = Depends(create_rate_limit_repo),
+) -> RateLimitService:
+    return RateLimitService(repo=repo)
 
 
 security = HTTPBearer(auto_error=False)

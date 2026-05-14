@@ -9,6 +9,7 @@ from auth.api.v1.dependencies import (
     create_auth_service,
     create_oauth_provider_resolver,
     create_oauth_state_service,
+    create_rate_limit_service,
     get_current_user,
 )
 from auth.api.v1.schemas import (
@@ -20,8 +21,10 @@ from auth.api.v1.schemas import (
 )
 from auth.core.enums import OAuthProviderName
 from auth.dtos.token import UserDTO
+from auth.exceptions.auth import InvalidCredentials
 from auth.services.auth_service import AuthService
 from auth.services.oauth_resolver import OAuthProviderResolver
+from auth.services.rate_limit import RateLimitService
 from auth.services.state_service import OAuthStateService
 
 router = APIRouter()
@@ -32,14 +35,33 @@ async def login(
     request: Request,
     data: LoginRequest,
     service: AuthService = Depends(create_auth_service),
+    rate_limit_service: RateLimitService = Depends(create_rate_limit_service),
 ) -> TokenResponse:
     user_agent = request.headers.get("User-Agent", None)
+    client_ip = request.client.host
 
-    tokens = await service.login(
+    await rate_limit_service.ensure_login_allowed(
+        ip=client_ip,
         login=data.login,
-        password=data.password,
-        user_agent=user_agent,
     )
+    try:
+        tokens = await service.login(
+            login=data.login,
+            password=data.password,
+            user_agent=user_agent,
+        )
+    except InvalidCredentials:
+        await rate_limit_service.register_failed_login_attempt(
+            ip=client_ip,
+            login=data.login,
+        )
+        raise
+
+    await rate_limit_service.reset_login_attempts(
+        ip=client_ip,
+        login=data.login,
+    )
+
     return TokenResponse(
         access_token=tokens.access_token,
         refresh_token=tokens.refresh_token,
@@ -48,9 +70,13 @@ async def login(
 
 @router.post("/registration", status_code=status.HTTP_201_CREATED)
 async def registration(
+    request: Request,
     data: UserRegistrationRequest,
     service: AuthService = Depends(create_auth_service),
+    rate_limit_service: RateLimitService = Depends(create_rate_limit_service),
 ) -> None:
+    client_ip = request.client.host
+    await rate_limit_service.check_registration_limit(client_ip)
     await service.user_registration(
         login=data.login,
         password=data.password,

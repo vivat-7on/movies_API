@@ -14,6 +14,7 @@ from auth.exceptions.oauth import (
     OAuthTokenExchangeFailed,
     OAuthUserInfoFailed,
 )
+from auth.exceptions.rate_limit import TooManyRequests
 from auth.exceptions.role import RoleAlreadyExist, RoleNotFound
 from auth.exceptions.user import UserNotFound
 
@@ -134,4 +135,14 @@ def setup_exception_handlers(app: FastAPI) -> None:
         return build_response(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Provider not supported",
+        )
+
+    @app.exception_handler(TooManyRequests)
+    async def too_many_requests_handler(
+        request: Request,
+        exc: TooManyRequests,
+    ):
+        return build_response(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many requests",
         )
