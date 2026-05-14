@@ -2,7 +2,7 @@ import secrets
 
 from attr import frozen
 
-from auth.exceptions.yandex_oauth import InvalidOAuthState
+from auth.exceptions.oauth import InvalidOAuthState
 from auth.ports.cache.state import ICacheStateRepo
 
 STATE_TTL_SECONDS = 300

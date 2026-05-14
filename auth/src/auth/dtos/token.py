@@ -19,7 +19,7 @@ class UserDTO(BaseModel):
     roles: list[str]
 
 
-class YandexTokensDTO(BaseModel):
+class OAuthTokensDTO(BaseModel):
     access_token: str
     expires_in: int | None = None
     refresh_token: str | None = None
@@ -38,3 +38,11 @@ class YandexUserInfoDTO(BaseModel):
     default_email: str | None = None
     emails: list[str] = Field(default_factory=list)
     psuid: str | None = None
+
+
+class OAuthUserInfoDTO(BaseModel):
+    social_id: str
+    login: str | None = None
+    email: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None

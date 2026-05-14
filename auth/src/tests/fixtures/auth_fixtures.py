@@ -24,7 +24,7 @@ class FakeUserRepo:
         return User(
             id=USER_ID,
             login="test_login",
-            password_hash=hash_password("correct_password"),
+            password_hash=await hash_password("correct_password"),
             token_version=1,
         )
 
@@ -35,7 +35,7 @@ class FakeUserRepo:
         return User(
             id=USER_ID,
             login="test_login",
-            password_hash=hash_password("correct_password"),
+            password_hash=await hash_password("correct_password"),
             token_version=1,
         )
 

@@ -42,7 +42,7 @@ class AuthSettings(BaseConfig):
     DEBUG: bool = True
 
 
-class YandexAuthSettings(BaseConfig):
+class YandexOAuthSettings(BaseConfig):
     YANDEX_AUTHORIZE_URI: str
     YANDEX_TOKEN_URI: str
     YANDEX_USER_INFO_URI: str

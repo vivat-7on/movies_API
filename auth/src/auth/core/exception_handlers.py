@@ -7,14 +7,15 @@ from auth.exceptions.auth import (
     InvalidCredentials,
     LoginAlreadyExists,
 )
+from auth.exceptions.oauth import (
+    InvalidOAuthState,
+    LinkedOAuthUserNotFound,
+    OAuthProviderNotSupported,
+    OAuthTokenExchangeFailed,
+    OAuthUserInfoFailed,
+)
 from auth.exceptions.role import RoleAlreadyExist, RoleNotFound
 from auth.exceptions.user import UserNotFound
-from auth.exceptions.yandex_oauth import (
-    InvalidOAuthState,
-    LinkedYandexUserNotFound,
-    YandexTokenExchangeFailed,
-    YandexUserInfoFailed,
-)
 
 
 def build_response(status_code: int, detail: str) -> JSONResponse:
@@ -95,32 +96,42 @@ def setup_exception_handlers(app: FastAPI) -> None:
             detail="Invalid OAuth state",
         )
 
-    @app.exception_handler(YandexTokenExchangeFailed)
+    @app.exception_handler(OAuthTokenExchangeFailed)
     async def yandex_token_exchange_failed_handler(
         request: Request,
-        exc: YandexTokenExchangeFailed,
+        exc: OAuthTokenExchangeFailed,
     ):
         return build_response(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Yandex token exchange failed",
         )
 
-    @app.exception_handler(YandexUserInfoFailed)
+    @app.exception_handler(OAuthUserInfoFailed)
     async def yandex_user_info_failed_handler(
         request: Request,
-        exc: YandexUserInfoFailed,
+        exc: OAuthUserInfoFailed,
     ):
         return build_response(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Yandex user info failed",
         )
 
-    @app.exception_handler(LinkedYandexUserNotFound)
+    @app.exception_handler(LinkedOAuthUserNotFound)
     async def linked_yandex_user_not_found_handler(
         request: Request,
-        exc: LinkedYandexUserNotFound,
+        exc: LinkedOAuthUserNotFound,
     ):
         return build_response(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Linked Yandex user not found",
+        )
+
+    @app.exception_handler(OAuthProviderNotSupported)
+    async def yandex_providers_not_supported_handler(
+        request: Request,
+        exc: OAuthProviderNotSupported,
+    ):
+        return build_response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Provider not supported",
         )

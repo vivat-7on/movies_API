@@ -10,7 +10,7 @@ from auth.core.config import (
     AuthSettings,
     DBSettings,
     RedisSettings,
-    YandexAuthSettings,
+    YandexOAuthSettings,
 )
 from auth.db.session import get_session
 from auth.dtos.token import UserDTO
@@ -22,11 +22,13 @@ from auth.repositories.db.social_account_repo import SocialAccountRepo
 from auth.repositories.db.user_repo import UserRepo
 from auth.repositories.db.user_role_repo import UserRoleRepo
 from auth.services.auth_service import AuthService
+from auth.services.oauth_resolver import OAuthProviderResolver
 from auth.services.role_service import RoleService
 from auth.services.state_service import OAuthStateService
 from auth.services.token_service import TokenService
 from auth.services.user_service import UserService
-from auth.services.yandex import YandexClient
+from auth.services.yandex_client import YandexClient
+from auth.services.yandex_provider import YandexOAuthProvider
 
 
 @lru_cache
@@ -39,18 +41,22 @@ def get_auth_settings() -> AuthSettings:
     return AuthSettings()
 
 
-def get_yandex_auth_settings() -> YandexAuthSettings:
-    return YandexAuthSettings()
+@lru_cache
+def get_yandex_auth_settings() -> YandexOAuthSettings:
+    return YandexOAuthSettings()
 
 
+@lru_cache
 def get_redis_settings() -> RedisSettings:
     return RedisSettings()
 
 
 def create_yandex_client(
-    yandex_auth_settings=Depends(get_yandex_auth_settings),
+    yandex_auth_settings: YandexOAuthSettings = Depends(
+        get_yandex_auth_settings,
+    ),
 ) -> YandexClient:
-    return YandexClient(yandex_auth_settings=yandex_auth_settings)
+    return YandexClient(settings=yandex_auth_settings)
 
 
 def create_social_account(
@@ -95,6 +101,26 @@ def create_cache_state_repo(
     return CacheStateRepo(redis=redis)
 
 
+def create_yandex_oauth_provider(
+    settings: YandexOAuthSettings = Depends(get_yandex_auth_settings),
+    client: YandexClient = Depends(create_yandex_client),
+) -> YandexOAuthProvider:
+    return YandexOAuthProvider(
+        settings=settings,
+        client=client,
+    )
+
+
+def create_oauth_provider_resolver(
+    yandex_provider: YandexOAuthProvider = Depends(
+        create_yandex_oauth_provider,
+    ),
+) -> OAuthProviderResolver:
+    return OAuthProviderResolver(
+        providers=[yandex_provider],
+    )
+
+
 def create_auth_service(
     user_repo: UserRepo = Depends(create_user_repo),
     refresh_token_repo: RefreshTokenRepo = Depends(create_refresh_token_repo),
@@ -102,9 +128,10 @@ def create_auth_service(
     auth_settings: AuthSettings = Depends(get_auth_settings),
     role_repo: RoleRepo = Depends(create_role_repo),
     user_role_repo: UserRoleRepo = Depends(create_user_role_repo),
-    yandex_client: YandexClient = Depends(create_yandex_client),
     social_account_repo: SocialAccountRepo = Depends(create_social_account),
-    session: AsyncSession = Depends(get_session),
+    oauth_provider_resolver: OAuthProviderResolver = Depends(
+        create_oauth_provider_resolver,
+    ),
 ) -> AuthService:
     return AuthService(
         user_repo=user_repo,
@@ -113,9 +140,8 @@ def create_auth_service(
         auth_settings=auth_settings,
         role_repo=role_repo,
         user_role_repo=user_role_repo,
-        yandex_client=yandex_client,
         social_account_repo=social_account_repo,
-        session=session,
+        oauth_provider_resolver=oauth_provider_resolver,
     )
 
 

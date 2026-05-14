@@ -1,5 +1,4 @@
 import uuid
-from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -8,10 +7,9 @@ from starlette.requests import Request
 
 from auth.api.v1.dependencies import (
     create_auth_service,
+    create_oauth_provider_resolver,
     create_oauth_state_service,
     get_current_user,
-    get_yandex_auth_settings,
-    require_roles,
 )
 from auth.api.v1.schemas import (
     LoginRequest,
@@ -20,9 +18,10 @@ from auth.api.v1.schemas import (
     UserRegistrationRequest,
     UserResponse,
 )
-from auth.core.config import YandexAuthSettings
+from auth.core.enums import OAuthProviderName
 from auth.dtos.token import UserDTO
 from auth.services.auth_service import AuthService
+from auth.services.oauth_resolver import OAuthProviderResolver
 from auth.services.state_service import OAuthStateService
 
 router = APIRouter()
@@ -105,32 +104,24 @@ async def logout_all(
     await service.logout_all(user_id=uuid.UUID(user.user_id))
 
 
-@router.get("/admin")
-async def admin_panel(user: UserDTO = Depends(require_roles(["admin"]))):
-    return {"message": "Welcome admin"}
-
-
-@router.get("/yandex/login")
-async def yandex_login(
-    settings: YandexAuthSettings = Depends(get_yandex_auth_settings),
+@router.get("/provider/{provider_name}/login")
+async def provider_login(
+    provider_name: OAuthProviderName,
     state_service: OAuthStateService = Depends(
         create_oauth_state_service,
     ),
+    resolver: OAuthProviderResolver = Depends(create_oauth_provider_resolver),
 ) -> RedirectResponse:
     state = await state_service.create_state()
-    params = {
-        "response_type": "code",
-        "client_id": settings.YANDEX_CLIENT_ID,
-        "redirect_uri": settings.YANDEX_REDIRECT_URI,
-        "state": state,
-    }
-    url = f"{settings.YANDEX_AUTHORIZE_URI}?{urlencode(params)}"
+    provider = resolver.get_provider(provider_name)
+    url = provider.get_authorize_url(state=state)
     return RedirectResponse(url=url)
 
 
-@router.get("/yandex/callback", response_model=TokenResponse)
-async def yandex_callback(
+@router.get("/provider/{provider_name}/callback", response_model=TokenResponse)
+async def provider_callback(
     request: Request,
+    provider_name: OAuthProviderName,
     state: str,
     code: str,
     error: str | None = None,
@@ -146,7 +137,8 @@ async def yandex_callback(
         )
     await state_service.validate_state(state)
     user_agent = request.headers.get("User-Agent", None)
-    tokens = await auth_service.login_with_yandex(
+    tokens = await auth_service.login_with_oauth_provider(
+        provider_name=provider_name,
         code=code,
         user_agent=user_agent,
     )

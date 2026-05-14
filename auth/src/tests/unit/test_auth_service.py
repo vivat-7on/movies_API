@@ -100,7 +100,7 @@ async def test_user_registration(
     user = user_repo.user
 
     assert user.login == login
-    assert verify_password(password, user.password_hash)
+    assert await verify_password(password, user.password_hash)
     assert user.email == email
     assert user.first_name == first_name
     assert user.last_name == last_name
