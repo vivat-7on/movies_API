@@ -1,6 +1,14 @@
-# Movies ETL & API
+# Online Cinema Microservices Platform
 
-Проект представляет собой сервис для загрузки данных о фильмах, жанрах и персоналиях из PostgreSQL в Elasticsearch (ETL), а также HTTP API для получения этих данных через FastAPI с кэшированием в Redis.
+Backend-платформа онлайн-кинотеатра, построенная на микросервисной архитектуре.
+
+Система включает:
+- ETL сервис загрузки данных в Elasticsearch
+- FastAPI API для контента
+- Auth-сервис с JWT/OAuth2
+- Redis caching и rate limiting
+- Nginx gateway
+- observability через OpenTelemetry и Jaeger
 
 ---
 
@@ -69,13 +77,27 @@ Flow:
 
 ## Rate limiting
 
-Rate limiting реализован на уровне Nginx.
+Проект использует двухуровневое ограничение запросов.
 
-Используется ограничение по IP:
+### Nginx level
+
+Rate limiting реализован на уровне Nginx через `limit_req`.
+
+Используются ограничения по IP:
+
 - Auth API: 5 requests/sec
 - Movies API: 10 requests/sec
 
 При превышении лимита возвращается HTTP 429.
+
+### Application level
+
+Для Auth-сервиса дополнительно реализована защита от brute-force атак через Redis:
+
+- ограничение попыток login
+- ограничение регистраций
+- хранение счётчиков с TTL
+- атомарные Redis операции через Lua scripts
 
 ---
 
@@ -87,6 +109,19 @@ Rate limiting реализован на уровне Nginx.
 - генерируется `X-Request-Id`
 - request id прокидывается через Nginx
 - трейсы отправляются в Jaeger через OTLP gRPC
+
+---
+
+## Безопасность
+
+- JWT access/refresh токены
+- Хеширование refresh токенов в БД (SHA-256)
+- Хеширование паролей через bcrypt
+- Logout всех устройств через token_version
+- OAuth state validation
+- Rate limiting через Redis
+- Защита от brute-force login атак
+- Защита от повторного использования OAuth state
 
 ---
 

@@ -20,6 +20,18 @@ services:
       timeout: 5s
       retries: 3
 
+  cache:
+    image: redis:5.0.4
+    container_name: auth_cache
+    restart: always
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping | grep PONG" ]
+      interval: 1s
+      timeout: 3s
+      retries: 5
+    command: [ "redis-server" ]
+
+
   api:
     build: .
     container_name: auth_api
@@ -29,7 +41,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
 
 volumes:
   auth-postgres-data:

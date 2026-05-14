@@ -101,6 +101,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      cache:
+        condition: service_healthy
 
   gateway:
     build:

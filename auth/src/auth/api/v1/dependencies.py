@@ -2,6 +2,7 @@ from functools import lru_cache
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
@@ -34,7 +35,7 @@ from auth.services.yandex_provider import YandexOAuthProvider
 
 
 @lru_cache
-def get_db_settings():
+def get_db_settings() -> DBSettings:
     return DBSettings()
 
 
@@ -61,7 +62,7 @@ def create_yandex_client(
     return YandexClient(settings=yandex_auth_settings)
 
 
-def create_social_account(
+def create_social_account_repo(
     session=Depends(get_session),
 ) -> SocialAccountRepo:
     return SocialAccountRepo(session=session)
@@ -98,13 +99,13 @@ def create_user_role_repo(
 
 
 def create_cache_state_repo(
-    redis=Depends(get_redis),
+    redis: Redis = Depends(get_redis),
 ) -> CacheStateRepo:
     return CacheStateRepo(redis=redis)
 
 
 def create_rate_limit_repo(
-    redis=Depends(get_redis),
+    redis: Redis = Depends(get_redis),
 ) -> RateLimitRepo:
     return RateLimitRepo(redis=redis)
 
@@ -136,7 +137,9 @@ def create_auth_service(
     auth_settings: AuthSettings = Depends(get_auth_settings),
     role_repo: RoleRepo = Depends(create_role_repo),
     user_role_repo: UserRoleRepo = Depends(create_user_role_repo),
-    social_account_repo: SocialAccountRepo = Depends(create_social_account),
+    social_account_repo: SocialAccountRepo = Depends(
+        create_social_account_repo,
+    ),
     oauth_provider_resolver: OAuthProviderResolver = Depends(
         create_oauth_provider_resolver,
     ),
