@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -22,6 +23,8 @@ from auth.ports.db.user_repo import IUserRepo
 from auth.ports.db.user_role_repo import IUserRoleRepo
 from auth.services.oauth_resolver import OAuthProviderResolver
 from auth.services.token_service import TokenService
+
+logger = logging.getLogger(__name__)
 
 
 @frozen
@@ -176,10 +179,20 @@ class AuthService:
             refresh_token_hash,
         )
         if token is None:
-            return
+            logger.warning(
+                "Logout failed, refresh token not found for user_id=%s",
+                user_id,
+            )
+            raise InvalidCredentials()
 
         if str(token.user_id) != user_id:
-            return
+            logger.warning(
+                "Logout failed: refresh token user mismatch. "
+                "token_user_id=%s, request_user_id=%s",
+                token.user_id,
+                user_id,
+            )
+            raise InvalidCredentials()
 
         await self.refresh_token_repo.delete(token)
 

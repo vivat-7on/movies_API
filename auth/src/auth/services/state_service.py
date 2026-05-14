@@ -21,11 +21,9 @@ class OAuthStateService:
     async def validate_state(self, state: str) -> None:
         key = self._build_state_key(state)
 
-        exists = await self.cache.get(key=key)
+        exists = await self.cache.get_delete(key=key)
         if not exists:
             raise InvalidOAuthState()
-
-        await self.cache.delete(key=key)
 
     @staticmethod
     def _build_state_key(state: str) -> str:
