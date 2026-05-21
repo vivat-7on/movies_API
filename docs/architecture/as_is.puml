@@ -1,0 +1,33 @@
+@startuml
+title AS IS architecture
+
+actor User
+
+rectangle Frontend
+rectangle NGINX
+
+rectangle "AUTH API" as AUTH
+rectangle "MOVIES API" as MOVIES
+rectangle ADMIN
+rectangle "ETL PG → ES" as ETL
+
+database PostgreSQL
+database Elasticsearch
+database Redis
+
+User --> Frontend
+Frontend --> NGINX : HTTP
+
+NGINX --> AUTH : HTTP
+NGINX --> MOVIES : HTTP
+NGINX --> ADMIN : HTTP
+
+MOVIES --> Redis : cache
+MOVIES --> Elasticsearch : search
+
+ADMIN --> PostgreSQL : CRUD
+
+ETL --> PostgreSQL : extract
+ETL --> Elasticsearch : load
+
+@enduml

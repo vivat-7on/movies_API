@@ -1,0 +1,44 @@
+@startuml
+title TO BE architecture
+
+actor User
+
+rectangle Frontend
+rectangle NGINX
+
+rectangle "AUTH API" as AUTH
+rectangle "MOVIES API" as MOVIES
+rectangle ADMIN
+rectangle "ETL PG → ES" as ETL1
+rectangle "ETL Kafka → CH" as ETL2
+rectangle "UGC API" as UGC
+
+database PostgreSQL
+database Elasticsearch
+database Redis
+database ClickHouse
+
+queue Kafka
+
+User --> Frontend
+Frontend --> NGINX : HTTP
+
+NGINX --> AUTH : HTTP
+NGINX --> MOVIES : HTTP
+NGINX --> ADMIN : HTTP
+NGINX --> UGC : HTTP
+
+MOVIES --> Redis : cache
+MOVIES --> Elasticsearch : search
+
+UGC --> Kafka : produce events
+
+ETL2 --> Kafka : consume events
+ETL2 --> ClickHouse : load events
+
+ADMIN --> PostgreSQL : CRUD
+
+ETL1 --> PostgreSQL : extract
+ETL1 --> Elasticsearch : load
+
+@enduml
