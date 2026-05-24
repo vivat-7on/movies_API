@@ -63,6 +63,61 @@ Flow:
 
 ---
 
+## UGC API
+
+Сервис принимает события пользовательской активности и отправляет их в Kafka.
+
+### Поддерживаемые события
+
+- `click`
+- `page_view`
+- `video_quality_changed`
+- `video_completed`
+- `search_filter_used`
+
+#### Endpoint
+
+```http
+POST /api/v1/events
+```
+Пример запроса:
+```commandline
+curl -X POST http://127.0.0.1/api/v1/events \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_type": "page_view",
+    "user_id": "f668e966-f64a-422f-abf8-5e39d4aa662a",
+    "timestamp": "2026-05-22T12:00:00Z",
+    "payload": {
+      "page_url": "/movies/123",
+      "duration_seconds": 42
+    }
+  }'
+```
+#### Формат события:
+
+```json
+{
+  "event_type": "page_view",
+  "user_id": "uuid",
+  "timestamp": "ISO-8601 datetime",
+  "payload": {}
+}
+```
+#### Kafka
+
+События публикуются в Kafka topic:
+`events`
+
+Проверка сообщений в Kafka:
+```commandline
+docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic events \
+  --from-beginning
+```
+---
+
 ## Graceful degradation
 
 Административная панель не хранит локальные пароли пользователей.
