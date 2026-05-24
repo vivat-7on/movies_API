@@ -25,7 +25,10 @@ def events():
     except ValidationError as exc:
         return jsonify({"error": exc.errors()}), 422
 
-    event_producer.send(data=event.model_dump(mode="json"))
+    try:
+        event_producer.send(data=event.model_dump(mode="json"))
+    except Exception:
+        return jsonify({"error": "Kafka is unavailable"}), 503
     return jsonify({"message": "sent"}), 201
 
 
