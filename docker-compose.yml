@@ -201,9 +201,42 @@ services:
       - "5001:5000"
     command: python -m flask --app src/app/app:app run --host=0.0.0.0 --port=5000
 
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DB: movies
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhouse-data:/var/lib/clichouse
+
+  ugc_etl:
+    build:
+      context: ./ugc_etl
+      dockerfile: Dockerfile
+    container_name: ugc_etl
+    env_file:
+      - ./ugc_etl/.env
+    environment:
+      PYTHONPATH: /app/src
+    restart: always
+    depends_on:
+      - kafka_init
+      - clickhouse
+    command:  python src/main.py
+
 volumes:
   movies-postgres-data:
   movies-es-data:
   movies-etl-state:
   static-volume:
   kafka-data:
+  clickhouse-data:

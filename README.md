@@ -46,8 +46,19 @@ Backend-платформа онлайн-кинотеатра, построенн
    - Не управляет схемой базы данных (managed = False)
    - Использует встроенный Django Admin
    - Статические файлы собираются в volume и отдаются через Nginx
+
+5. UGC ETL
+   - Читает события пользовательской активности из Kafka
+   - Обрабатывает события batch'ами
+   - Загружает данные в ClickHouse
+   - Коммитит Kafka offset только после успешной вставки
    
 ---
+
+## Architecture diagrams
+
+- AS IS: `docs/architecture_as_is.png`
+- TO BE: `docs/architecture_to_be.png`
 
 ## OAuth авторизация
 
@@ -109,7 +120,7 @@ curl -X POST http://127.0.0.1/api/v1/events \
 События публикуются в Kafka topic:
 `events`
 
-Проверка сообщений в Kafka:
+#### Проверка сообщений в Kafka:
 ```commandline
 docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
@@ -117,6 +128,14 @@ docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --from-beginning
 ```
 ---
+
+#### Проверка данных в ClickHouse
+
+```commandline
+curl "http://localhost:8123" \
+  --user default:password \
+  -d "SELECT * FROM movies.events"
+```
 
 ## Graceful degradation
 
@@ -194,12 +213,17 @@ Rate limiting реализован на уровне Nginx через `limit_req
 - **SQLAlchemy (async)**
 - **pytest**
 - **Django Admin**
+- **Kafka**
+- **ClickHouse**
+- **Flask**
 
 ---
 
 ## Запуск
 
-`docker compose up --build`
+```commandline
+docker compose up --build
+```
 
 ---
 
