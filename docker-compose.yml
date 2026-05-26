@@ -187,11 +187,11 @@ services:
       "
   ugc_api:
     build:
-      context: ./ugс_api
+      context: ugc_api
       dockerfile: Dockerfile
     container_name: ugc_api
     env_file:
-      - ./ugс_api/.env
+      - ugc_api/.env
     restart: always
     environment:
       PYTHONPATH: /app/src
