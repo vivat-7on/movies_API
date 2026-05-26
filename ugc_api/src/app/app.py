@@ -59,5 +59,18 @@ def events():
     return jsonify({"message": "sent"}), 201
 
 
+@app.get("/api/v1/health")
+def health():
+    return jsonify({"status": "ok"}), 200
+
+
+@app.get("/api/v1/ready")
+def ready():
+    if event_producer.is_ready():
+        return jsonify({"status": "ready"}), 200
+
+    return jsonify({"status": "not_ready"}), 503
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0")

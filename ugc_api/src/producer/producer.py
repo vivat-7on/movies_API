@@ -20,6 +20,13 @@ class KafkaEventProducer:
         self.producer.flush(timeout=5)
         self.producer.close(timeout=5)
 
+    def is_ready(self) -> bool:
+        try:
+            self.producer.partitions_for(self.topic)
+            return True
+        except Exception:
+            return False
+
 
 def create_kafka_producer(bootstrap_servers: str) -> KafkaProducer:
     return KafkaProducer(
@@ -29,5 +36,4 @@ def create_kafka_producer(bootstrap_servers: str) -> KafkaProducer:
         retries=3,
         linger_ms=100,
         request_timeout_ms=10_000,
-        delivery_timeout_ms=30_000,
     )

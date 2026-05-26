@@ -108,7 +108,12 @@ curl -X POST http://127.0.0.1/api/v1/events \
     "timestamp": "2026-05-22T12:00:00Z",
     "payload": {
       "page_url": "/movies/123",
-      "duration_seconds": 42
+      "movie_id": "123",
+      "page_url": "/page/123",
+      "duration_seconds": 123,
+      "video_quality": "full",
+      "filter_name": "genre",
+      "filter_value": "action"
     }
   }'
 ```
