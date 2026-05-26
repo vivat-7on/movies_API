@@ -2,75 +2,41 @@ import atexit
 
 from auth.auth import Auth
 from auth.settings import AuthSettings
-from flask import Flask, jsonify, request
-from jose import JWTError
+from flask import Flask
 from producer.producer import KafkaEventProducer, create_kafka_producer
 from producer.settings import KafkaSettings
-from pydantic import ValidationError
 
-from app.schemas import EventIn, EventMessage
-
-app = Flask(__name__)
-
-kafka_settings = KafkaSettings()
-auth_settings = AuthSettings()
-
-raw_producer = create_kafka_producer(
-    bootstrap_servers=kafka_settings.kafka_bootstrap_servers,
-)
-
-event_producer = KafkaEventProducer(
-    producer=raw_producer,
-    topic=kafka_settings.KAFKA_TOPIC,
-)
-atexit.register(event_producer.close)
-auth = Auth(settings=auth_settings)
+from app.routes import events_bp
 
 
-@app.post("/api/v1/events")
-def events():
-    auth_header = request.headers.get("Authorization")
-
-    try:
-        user_id = auth.get_user_id_from_token(auth_header)
-    except (JWTError, ValueError):
-        return jsonify({"error": "Invalid token"}), 401
-
-    try:
-        event = EventIn.model_validate(request.get_json())
-    except ValidationError as exc:
-        return jsonify({"error": exc.errors()}), 422
-
-    if user_id is None and event.anonymous_id is None:
-        return jsonify({"error": "anonymous_id is required"}), 422
-
-    event_message = EventMessage(
-        **event.model_dump(),
-        user_id=user_id,
+def create_real_event_producer() -> KafkaEventProducer:
+    kafka_settings = KafkaSettings()
+    raw_producer = create_kafka_producer(
+        bootstrap_servers=kafka_settings.kafka_bootstrap_servers
     )
 
-    try:
-        future = event_producer.send(data=event_message.model_dump(mode="json"))
-        future.get(timeout=1)
-    except Exception:
-        app.logger.exception("Failed to send event to Kafka")
-        return jsonify({"error": "Kafka is unavailable"}), 503
+    event_producer = KafkaEventProducer(
+        producer=raw_producer,
+        topic=kafka_settings.KAFKA_TOPIC,
+    )
 
-    return jsonify({"message": "sent"}), 201
+    atexit.register(event_producer.close)
 
-
-@app.get("/api/v1/health")
-def health():
-    return jsonify({"status": "ok"}), 200
+    return event_producer
 
 
-@app.get("/api/v1/ready")
-def ready():
-    if event_producer.is_ready():
-        return jsonify({"status": "ready"}), 200
+def create_app(event_producer=None, auth=None) -> Flask:
+    app = Flask(__name__)
 
-    return jsonify({"status": "not_ready"}), 503
+    app.config["event_producer"] = event_producer or create_real_event_producer()
+    app.config["auth"] = auth or Auth(settings=AuthSettings)
 
+    app.register_blueprint(events_bp)
+
+    return app
+
+
+app = create_app()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0")
