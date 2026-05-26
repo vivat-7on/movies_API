@@ -1,6 +1,11 @@
+import logging
+import time
+
 from consumer.kafka_consumer import create_kafka_consumer
 from loader.clickhouse_loader import ClickHouseLoader, create_clickhouse_client
 from settings import Settings
+
+logger = logging.getLogger(__name__)
 
 config = Settings()
 
@@ -26,14 +31,38 @@ loader = ClickHouseLoader(
 
 loader.create_events_table()
 
-batch = []
+
+def flush_butch(batch, loader, consumer) -> None:
+    if not batch:
+        return
+
+    loader.insert_batch(batch)
+    consumer.commit()
+    logger.info("Insert batch", extra={"batch size": len(batch)})
+    batch.clear()
+
+
+def main():
+    batch = []
+    last_flush_at = time.monotonic()
+
+    try:
+        for message in consumer:
+            batch.append(message.value)
+
+            now = time.monotonic()
+            should_flush_by_size = len(batch) >= config.BATCH_SIZE
+            should_flush_by_time = now - last_flush_at >= config.BATCH_TIMEOUT_SECONDS
+
+            if should_flush_by_size or should_flush_by_time:
+                flush_butch(batch, loader, consumer)
+                last_flush_at = time.monotonic()
+    except KeyboardInterrupt:
+        logger.info("ETL stopped by user")
+    finally:
+        flush_butch(batch, loader, consumer)
+        consumer.close()
+
+
 if __name__ == "__main__":
-    for message in consumer:
-        print(message.value)
-
-        batch.append(message.value)
-
-        if len(batch) >= config.BATCH_SIZE:
-            loader.insert_batch(batch)
-            consumer.commit()
-            batch.clear()
+    main()
