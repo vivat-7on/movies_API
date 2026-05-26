@@ -1,3 +1,5 @@
+import atexit
+
 from auth.auth import Auth
 from auth.settings import AuthSettings
 from flask import Flask, jsonify, request
@@ -21,6 +23,7 @@ event_producer = KafkaEventProducer(
     producer=raw_producer,
     topic=kafka_settings.KAFKA_TOPIC,
 )
+atexit.register(event_producer.close)
 auth = Auth(settings=auth_settings)
 
 
@@ -47,7 +50,8 @@ def events():
     )
 
     try:
-        event_producer.send(data=event_message.model_dump(mode="json"))
+        future = event_producer.send(data=event_message.model_dump(mode="json"))
+        future.get(timeout=1)
     except Exception:
         app.logger.exception("Failed to send event to Kafka")
         return jsonify({"error": "Kafka is unavailable"}), 503
