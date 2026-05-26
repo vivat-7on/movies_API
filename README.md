@@ -91,13 +91,20 @@ Flow:
 ```http
 POST /api/v1/events
 ```
-Пример запроса:
-```commandline
+
+`Authorization` header optional:
+- if JWT token is provided → `user_id` extracted from token
+- if JWT token is absent → `anonymous_id` must be provided
+
+Example request:
+
+```bash
 curl -X POST http://127.0.0.1/api/v1/events \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <jwt_access_token>" \
   -d '{
     "event_type": "page_view",
-    "user_id": "f668e966-f64a-422f-abf8-5e39d4aa662a",
+    "anonymous_id": "f668e966-f64a-422f-abf8-5e39d4aa662a",
     "timestamp": "2026-05-22T12:00:00Z",
     "payload": {
       "page_url": "/movies/123",
@@ -105,12 +112,13 @@ curl -X POST http://127.0.0.1/api/v1/events \
     }
   }'
 ```
+
 #### Формат события:
 
 ```json
 {
   "event_type": "page_view",
-  "user_id": "uuid",
+  "anonymous_id": "uuid",
   "timestamp": "ISO-8601 datetime",
   "payload": {}
 }

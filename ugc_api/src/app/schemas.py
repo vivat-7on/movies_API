@@ -14,8 +14,12 @@ class EventTypes(StrEnum):
     search_filter_used = "search_filter_used"
 
 
-class Event(BaseModel):
+class EventIn(BaseModel):
     event_type: EventTypes
-    user_id: uuid.UUID
+    anonymous_id: str | None = None
     timestamp: datetime.datetime
     payload: dict[str, Any]
+
+
+class EventMessage(EventIn):
+    user_id: uuid.UUID | None = None

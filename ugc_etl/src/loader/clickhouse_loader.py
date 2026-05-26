@@ -31,12 +31,14 @@ class ClickHouseLoader:
             f"""
             CREATE TABLE IF NOT EXISTS {self.table} (
             event_type String,
-            user_id UUID,
+            user_id Nullable(UUID),
+            anonymous_id Nullable(String),
             timestamp DateTime,
             payload String
             )
             ENGINE = MergeTree
-            ORDER BY (timestamp, user_id);
+            PARTITION BY toYYYYMM(timestamp)
+            ORDER BY (timestamp, event_type);
             """,
         )
 
@@ -47,7 +49,8 @@ class ClickHouseLoader:
         rows = [
             (
                 row["event_type"],
-                row["user_id"],
+                row.get("user_id"),
+                row.get("anonymous_id"),
                 datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")),
                 json.dumps(row["payload"]),
             )

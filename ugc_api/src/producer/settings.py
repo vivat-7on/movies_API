@@ -8,6 +8,7 @@ class KafkaSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+        extra = "ignore"
 
     @property
     def kafka_bootstrap_servers(self) -> str:
