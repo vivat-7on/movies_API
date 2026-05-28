@@ -4,11 +4,12 @@ Backend-платформа онлайн-кинотеатра, построенн
 
 Система включает:
 - ETL сервис загрузки данных в Elasticsearch
+- UGC pipeline: Kafka → ETL → ClickHouse
 - FastAPI API для контента
 - Auth-сервис с JWT/OAuth2
 - Redis caching и rate limiting
 - Nginx gateway
-- observability через OpenTelemetry и Jaeger
+- observability through OpenTelemetry and Jaeger
 
 ---
 
@@ -47,7 +48,7 @@ Backend-платформа онлайн-кинотеатра, построенн
    - Использует встроенный Django Admin
    - Статические файлы собираются в volume и отдаются через Nginx
 
-5. UGC ETL
+5. **UGC ETL**
    - Читает события пользовательской активности из Kafka
    - Обрабатывает события batch'ами
    - Загружает данные в ClickHouse
@@ -57,8 +58,8 @@ Backend-платформа онлайн-кинотеатра, построенн
 
 ## Architecture diagrams
 
-- AS IS: `docs/architecture_as_is.png`
-- TO BE: `docs/architecture_to_be.png`
+- [AS IS](docs/architecture/as_is.png)
+- [TO BE](docs/architecture/to_be.png)
 
 ## OAuth авторизация
 
@@ -109,7 +110,6 @@ curl -X POST http://127.0.0.1/api/v1/events \
     "payload": {
       "page_url": "/movies/123",
       "movie_id": "123",
-      "page_url": "/page/123",
       "duration_seconds": 123,
       "video_quality": "full",
       "filter_name": "genre",
@@ -117,6 +117,12 @@ curl -X POST http://127.0.0.1/api/v1/events \
     }
   }'
 ```
+
+#### Health endpoints
+
+- `GET /health` — liveness probe
+- `GET /ready` — readiness probe (Kafka availability check)
+
 
 #### Формат события:
 
