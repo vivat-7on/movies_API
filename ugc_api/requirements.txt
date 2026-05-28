@@ -4,3 +4,4 @@ pydantic-settings==2.14.0
 python-dotenv==1.2.2
 kafka-python==2.0.2
 python-jose==3.3.0
+pytest==9.0.3

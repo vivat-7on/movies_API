@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     BATCH_SIZE: int = 10
     BATCH_TIMEOUT_SECONDS: int = 10
 
-    class Config:
+    class ConfigDict:
         env_file = BASE_DIR.parent / ".env"
         extra = "ignore"
 
