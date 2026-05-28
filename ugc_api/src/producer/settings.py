@@ -6,7 +6,7 @@ class KafkaSettings(BaseSettings):
     KAFKA_PORT: int = 9092
     KAFKA_TOPIC: str = "events"
 
-    class Config:
+    class ConfigDict:
         env_file = ".env"
         extra = "ignore"
 

@@ -3,7 +3,7 @@ import uuid
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class EventTypes(StrEnum):
@@ -19,6 +19,8 @@ class EventIn(BaseModel):
     anonymous_id: str | None = None
     timestamp: datetime.datetime
     payload: dict[str, Any]
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class EventMessage(EventIn):

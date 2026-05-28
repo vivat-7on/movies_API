@@ -5,6 +5,6 @@ class AuthSettings(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
 
-    class Config:
+    class ConfigDict:
         env_file = ".env"
         extra = "ignore"

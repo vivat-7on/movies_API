@@ -29,14 +29,13 @@ def create_app(event_producer=None, auth=None) -> Flask:
     app = Flask(__name__)
 
     app.config["event_producer"] = event_producer or create_real_event_producer()
-    app.config["auth"] = auth or Auth(settings=AuthSettings)
+    app.config["auth"] = auth or Auth(settings=AuthSettings())
 
     app.register_blueprint(events_bp)
 
     return app
 
 
-app = create_app()
-
 if __name__ == "__main__":
+    app = create_app()
     app.run(host="0.0.0.0")

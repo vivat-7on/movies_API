@@ -199,7 +199,7 @@ services:
       - kafka_init
     ports:
       - "5001:5000"
-    command: python -m flask --app src/app/app:app run --host=0.0.0.0 --port=5000
+    command: python -m flask --app wsgi:app run --host=0.0.0.0 --port=5000
     healthcheck:
       test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/health')\"" ]
       interval: 10s
