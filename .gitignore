@@ -206,3 +206,12 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 /tests/functional/.env
+/.idea/vcs.xml
+/.idea/workspace.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/pySourceRootDetection.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/movies_API.iml
+/.idea/codeStyles/codeStyleConfig.xml
