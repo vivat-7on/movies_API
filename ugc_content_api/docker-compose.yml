@@ -1,0 +1,11 @@
+services:
+  mongo_single:
+    image: mongo:8.0
+    container_name: mongo_single
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

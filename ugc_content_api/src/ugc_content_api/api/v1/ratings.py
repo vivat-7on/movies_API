@@ -1,4 +1,5 @@
 import uuid
+from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -41,7 +42,7 @@ async def get_my_rating(
     score = await service.get_user_score(movie_id=movie_id, user_id=user_id)
     if score is None:
         raise HTTPException(
-            status_code=404,
+            status_code=HTTPStatus.NOT_FOUND,
             detail="Rating not found",
         )
     return MyRatingResponse(
@@ -52,7 +53,7 @@ async def get_my_rating(
 @router.put(
     "/{movie_id}/ratings/me",
     response_model=MyRatingResponse,
-    status_code=200,
+    status_code=HTTPStatus.OK,
 )
 async def upsert_my_score(
     movie_id: uuid.UUID,
@@ -72,7 +73,7 @@ async def upsert_my_score(
 
 @router.delete(
     "/{movie_id}/ratings/me",
-    status_code=204,
+    status_code=HTTPStatus.NO_CONTENT,
 )
 async def delete_my_score(
     movie_id: uuid.UUID,

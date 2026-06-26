@@ -2,6 +2,10 @@ import uuid
 from dataclasses import dataclass
 
 from ugc_content_api.entities.ratings import MovieRating, MovieRatingSummary
+from ugc_content_api.exceptions.ratings import (
+    ScoreForbiddenError,
+    ScoreNotFound,
+)
 from ugc_content_api.interfaces.ratings import IMovieRatingRepo
 
 
@@ -42,6 +46,17 @@ class MovieRatingService:
         user_id: uuid.UUID,
         movie_id: uuid.UUID,
     ) -> None:
+        score = await self.repo.get_user_score(
+            movie_id=movie_id,
+            user_id=user_id,
+        )
+
+        if score is None:
+            raise ScoreNotFound("Score not found")
+
+        if score.user_id != user_id:
+            raise ScoreForbiddenError("Score not allowed")
+
         return await self.repo.delete_user_score(
             movie_id=movie_id,
             user_id=user_id,
