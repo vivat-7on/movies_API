@@ -150,7 +150,7 @@ class ReviewVoteRepo(IReviewVoteRepo):
                 },
             },
         ]
-        cursor = self.db.review_votes.aggregate(pipeline)
+        cursor = await self.db.review_votes.aggregate(pipeline)
         docs = await cursor.to_list(length=None)
         if not docs:
             return ReviewSummary(

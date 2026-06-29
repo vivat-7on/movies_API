@@ -46,7 +46,7 @@ class ReviewSummary:
 
 
 class ReviewSortOptions(StrEnum):
-    likes_desc = "likes"
-    likes_asc = "-likes"
+    created_at_asc = "created_at"
+    created_at_desc = "-created_at"
     title_desc = "title"
     title_asc = "-title"
