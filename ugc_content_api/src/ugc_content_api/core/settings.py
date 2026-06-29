@@ -13,7 +13,23 @@ class MongoSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
+        extra="ignore",
     )
+
+
+class AuthSettings(BaseSettings):
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
+
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / ".env",
+        extra="ignore",
+    )
+
+
+@lru_cache
+def get_auth_settings() -> AuthSettings:
+    return AuthSettings()
 
 
 @lru_cache
