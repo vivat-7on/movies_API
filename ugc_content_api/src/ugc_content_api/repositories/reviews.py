@@ -77,7 +77,6 @@ class ReviewRepo(IReviewRepo):
             },
             return_document=ReturnDocument.AFTER,
         )
-
         return self._map_review(updated_review)
 
     async def delete_review(
@@ -86,7 +85,8 @@ class ReviewRepo(IReviewRepo):
     ) -> None:
         await self.db.reviews.delete_one({"review_id": str(review_id)})
 
-    def _map_review(self, document: dict) -> Review:
+    @staticmethod
+    def _map_review(document: dict) -> Review:
         return Review(
             review_id=uuid.UUID(document["review_id"]),
             user_id=uuid.UUID(document["user_id"]),

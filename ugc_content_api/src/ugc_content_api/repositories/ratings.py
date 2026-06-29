@@ -91,7 +91,8 @@ class MovieRatingRepo(IMovieRatingRepo):
             {"movie_id": str(movie_id), "user_id": str(user_id)},
         )
 
-    def _map_rating(self, document: dict) -> MovieRating:
+    @staticmethod
+    def _map_rating(document: dict) -> MovieRating:
         return MovieRating(
             movie_id=uuid.UUID(document["movie_id"]),
             user_id=uuid.UUID(document["user_id"]),
