@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -12,6 +13,8 @@ from ugc_content_api.core.connect import create_client
 from ugc_content_api.core.exception_handlers import setup_exception_handlers
 from ugc_content_api.core.indexes import create_indexes
 from ugc_content_api.core.settings import get_mongo_settings
+
+DEBUG = os.getenv("DEBUG", "true").lower() == "true"
 
 
 @asynccontextmanager
@@ -30,17 +33,21 @@ async def lifespan(app: FastAPI):
     await client.close()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    docs_url="/ugc-content/docs" if DEBUG else None,
+    openapi_url="/ugc-content/openapi.json" if DEBUG else None,
+    lifespan=lifespan,
+)
 
 setup_exception_handlers(app)
 
-app.include_router(router=router, prefix="/api/v1")
-app.include_router(router=review_router, prefix="/api/v1")
-app.include_router(router=movie_router, prefix="/api/v1")
-app.include_router(router=movie_bookmarks_router, prefix="/api/v1")
-app.include_router(router=bookmarks_router, prefix="/api/v1")
+app.include_router(router=router, prefix="/api/v1/ugc-content")
+app.include_router(router=review_router, prefix="/api/v1/ugc-content")
+app.include_router(router=movie_router, prefix="/api/v1/ugc-content")
+app.include_router(router=movie_bookmarks_router, prefix="/api/v1/ugc-content")
+app.include_router(router=bookmarks_router, prefix="/api/v1/ugc-content")
 
 
-@app.get("/health")
+@app.get("/api/v1/ugc-content/health")
 def health():
     return {"status": "ok"}

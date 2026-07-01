@@ -119,6 +119,7 @@ services:
       - auth
       - admin
       - ugc_api
+      - ugc_content_api
 
   admin:
     build:
@@ -236,7 +237,32 @@ services:
     depends_on:
       - kafka_init
       - clickhouse
-    command:  python src/main.py
+    command: python src/main.py
+
+  mongo:
+    image: mongo:8.0
+    container_name: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ugc_content_api:
+    build:
+      context: ./ugc_content_api
+      dockerfile: Dockerfile
+    container_name: ugc_content_api
+    env_file:
+      - ./ugc_content_api/.env
+    restart: always
+    depends_on:
+      mongo:
+        condition: service_healthy
 
 volumes:
   movies-postgres-data:
@@ -245,3 +271,4 @@ volumes:
   static-volume:
   kafka-data:
   clickhouse-data:
+  mongo-data:

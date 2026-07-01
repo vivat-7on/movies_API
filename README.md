@@ -6,6 +6,7 @@ Backend-платформа онлайн-кинотеатра, построенн
 
 - ETL сервис загрузки данных в Elasticsearch
 - UGC pipeline: Kafka → ETL → ClickHouse
+- UGC Content API (MongoDB)
 - FastAPI API для контента
 - Auth-сервис с JWT/OAuth2
 - Redis caching и rate limiting
@@ -61,7 +62,7 @@ Backend-платформа онлайн-кинотеатра, построенн
 - Загружает данные в ClickHouse
 - Коммитит Kafka offset только после успешной вставки
 
-7  **UGC content**
+7  **UGC content API**
 
 - Принимает оценки, рецензии и закладки
 - Сохраняет всё в MongoDB
@@ -175,6 +176,20 @@ curl "http://localhost:8123" \
 
 ## UGC content API
 
+Сервис хранения пользовательского контента.
+
+### Возможности
+
+- оценки фильмов;
+- рецензии;
+- лайки/дизлайки рецензий;
+- закладки.
+
+- FastAPI сервис
+- MongoDB как основное хранилище
+- Индексы для быстрого поиска
+- CRUD API для оценок, рецензий и закладок
+
 Для хранения оценок, рецензий и закладок выбран отдельный сервис
 `ugc_content_api`.
 
@@ -261,6 +276,20 @@ Redis:
 
 ---
 
+## CI
+
+Проект использует GitHub Actions.
+
+Pipeline автоматически выполняет:
+
+- Ruff (lint)
+- Ruff formatter
+- mypy
+- pytest
+- проверку на Python 3.10, 3.11 и 3.12
+- отправку результата в Telegram
+
+
 ## Используемые технологии
 
 - **Python 3.11**
@@ -288,6 +317,21 @@ Redis:
 docker compose up --build
 ```
 
+После запуска автоматически поднимаются:
+
+- PostgreSQL
+- Elasticsearch
+- Redis
+- MongoDB
+- Kafka
+- ClickHouse
+- Auth API
+- Movies API
+- UGC API
+- UGC Content API
+- ETL сервисы
+- Django Admin
+- Nginx Gateway
 ---
 
 ## Доступные сервисы
@@ -296,5 +340,6 @@ docker compose up --build
 - Auth API docs: http://localhost/auth/docs
 - Django Admin: http://localhost/admin
 - Jaeger UI: http://localhost:16686
+- UGC content API docs: http://localhost/ugc-content/docs
 
 ---
