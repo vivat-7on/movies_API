@@ -45,7 +45,7 @@ class BookmarksRepo(IBookmarksRepo):
     ) -> None:
         await self.db.bookmarks.delete_one(
             {
-                "bookmark_id": str(user_id),
+                "user_id": str(user_id),
                 "movie_id": str(movie_id),
             },
         )

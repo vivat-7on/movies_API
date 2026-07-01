@@ -3,3 +3,5 @@ pydantic-settings==2.14.2
 uvicorn==0.49.0
 pymongo==4.17.0
 python-jose==3.5.0
+pytest==9.1.1
+pytest-asyncio==1.4.0

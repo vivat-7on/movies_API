@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from ugc_content_api.api.v1.bookmarks import (
@@ -6,9 +8,29 @@ from ugc_content_api.api.v1.bookmarks import (
 )
 from ugc_content_api.api.v1.ratings import router
 from ugc_content_api.api.v1.reviews import movie_router, review_router
+from ugc_content_api.core.connect import create_client
 from ugc_content_api.core.exception_handlers import setup_exception_handlers
+from ugc_content_api.core.indexes import create_indexes
+from ugc_content_api.core.settings import get_mongo_settings
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    settings = get_mongo_settings()
+    client = create_client(settings)
+    db = client[settings.MONGO_DB]
+
+    await create_indexes(db)
+
+    app.state.mongo_client = client
+    app.state.mongo_db = db
+
+    yield
+
+    await client.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 setup_exception_handlers(app)
 

@@ -1,13 +1,16 @@
-from fastapi import Depends
+from fastapi import Depends, Request
 from pymongo.asynchronous.database import AsyncDatabase
 
-from ugc_content_api.core.connect import get_mongo_db
 from ugc_content_api.repositories.bookmarks import BookmarksRepo
 from ugc_content_api.repositories.ratings import MovieRatingRepo
 from ugc_content_api.repositories.reviews import ReviewRepo, ReviewVoteRepo
-from ugc_content_api.services.bookmarks import BookmarksService
+from ugc_content_api.services.bookmarks import BookmarkService
 from ugc_content_api.services.ratings import MovieRatingService
 from ugc_content_api.services.reviews import ReviewService
+
+
+async def get_mongo_db(request: Request) -> AsyncDatabase:
+    return request.app.state.mongo_db
 
 
 def create_movie_rating_repo(
@@ -50,5 +53,5 @@ def create_review_service(
 
 def create_bookmarks_service(
     bookmarks_repo: BookmarksRepo = Depends(create_bookmarks_repo),
-) -> BookmarksService:
-    return BookmarksService(bookmarks_repo=bookmarks_repo)
+) -> BookmarkService:
+    return BookmarkService(bookmarks_repo=bookmarks_repo)

@@ -11,7 +11,7 @@ from ugc_content_api.schemas.bookmarks import (
     BookmarkResponse,
     BookmarksResponse,
 )
-from ugc_content_api.services.bookmarks import BookmarksService
+from ugc_content_api.services.bookmarks import BookmarkService
 
 movie_bookmarks_router = APIRouter(prefix="/movies", tags=["Bookmarks"])
 bookmarks_router = APIRouter(prefix="/bookmarks", tags=["Bookmarks"])
@@ -20,7 +20,7 @@ bookmarks_router = APIRouter(prefix="/bookmarks", tags=["Bookmarks"])
 @bookmarks_router.get("/me", response_model=BookmarksResponse)
 async def bookmarks(
     user_id: uuid.UUID = Depends(get_user_id),
-    service: BookmarksService = Depends(create_bookmarks_service),
+    service: BookmarkService = Depends(create_bookmarks_service),
 ) -> BookmarksResponse:
     bookmarks = await service.get_user_bookmarks(user_id)
 
@@ -44,7 +44,7 @@ async def bookmarks(
 async def put_bookmark_me(
     movie_id: uuid.UUID,
     user_id: uuid.UUID = Depends(get_user_id),
-    service: BookmarksService = Depends(create_bookmarks_service),
+    service: BookmarkService = Depends(create_bookmarks_service),
 ) -> None:
     await service.put_bookmark(user_id=user_id, movie_id=movie_id)
 
@@ -56,6 +56,6 @@ async def put_bookmark_me(
 async def delete_bookmark_me(
     movie_id: uuid.UUID,
     user_id: uuid.UUID = Depends(get_user_id),
-    service: BookmarksService = Depends(create_bookmarks_service),
+    service: BookmarkService = Depends(create_bookmarks_service),
 ):
     await service.delete_bookmark(user_id=user_id, movie_id=movie_id)

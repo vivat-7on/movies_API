@@ -7,7 +7,7 @@ from ugc_content_api.interfaces.bookmarks import IBookmarksRepo
 
 
 @dataclass(frozen=True)
-class BookmarksService:
+class BookmarkService:
     bookmarks_repo: IBookmarksRepo
 
     async def get_user_bookmarks(self, user_id: uuid.UUID) -> list[Bookmark]:
