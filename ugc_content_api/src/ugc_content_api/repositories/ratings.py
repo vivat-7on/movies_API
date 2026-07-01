@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import Any, Mapping, Sequence
 
 from pymongo import ReturnDocument
 from pymongo.asynchronous.database import AsyncDatabase
@@ -13,7 +14,7 @@ class MovieRatingRepo(IMovieRatingRepo):
         self.db = db
 
     async def get_summary(self, movie_id: uuid.UUID) -> MovieRatingSummary:
-        pipeline = [
+        pipeline: Sequence[Mapping[str, Any]] = [
             {"$match": {"movie_id": str(movie_id)}},
             {
                 "$group": {
@@ -80,6 +81,9 @@ class MovieRatingRepo(IMovieRatingRepo):
             upsert=True,
             return_document=ReturnDocument.AFTER,
         )
+        if rating is None:
+            raise RuntimeError("Raiting was not updated")
+
         return self._map_rating(rating)
 
     async def delete_user_score(

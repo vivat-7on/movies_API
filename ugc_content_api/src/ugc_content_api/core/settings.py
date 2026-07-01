@@ -18,8 +18,8 @@ class MongoSettings(BaseSettings):
 
 
 class AuthSettings(BaseSettings):
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str
+    JWT_SECRET_KEY: str = "secret"
+    JWT_ALGORITHM: str = "HS256"
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

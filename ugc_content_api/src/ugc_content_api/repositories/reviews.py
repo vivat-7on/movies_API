@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from typing import Any, Mapping, Sequence
 
 from pymongo import ReturnDocument
 from pymongo.asynchronous.database import AsyncDatabase
@@ -77,6 +78,9 @@ class ReviewRepo(IReviewRepo):
             },
             return_document=ReturnDocument.AFTER,
         )
+        if updated_review is None:
+            raise RuntimeError("Review was not updated")
+
         return self._map_review(updated_review)
 
     async def delete_review(
@@ -135,7 +139,7 @@ class ReviewVoteRepo(IReviewVoteRepo):
         )
 
     async def get_votes_summary(self, review_id: uuid.UUID) -> ReviewSummary:
-        pipeline = [
+        pipeline: Sequence[Mapping[str, Any]] = [
             {"$match": {"review_id": str(review_id)}},
             {
                 "$group": {
