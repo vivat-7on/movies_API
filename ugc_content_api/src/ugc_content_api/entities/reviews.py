@@ -1,7 +1,7 @@
 import datetime
 import uuid
 from dataclasses import dataclass
-from enum import StrEnum
+from enum import Enum
 
 
 @dataclass(frozen=True)
@@ -45,7 +45,7 @@ class ReviewSummary:
     avg_score: float
 
 
-class ReviewSortOptions(StrEnum):
+class ReviewSortOptions(str, Enum):
     created_at_asc = "created_at"
     created_at_desc = "-created_at"
     title_desc = "title"

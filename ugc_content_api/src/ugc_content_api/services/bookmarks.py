@@ -18,7 +18,7 @@ class BookmarkService:
         user_id: uuid.UUID,
         movie_id: uuid.UUID,
     ) -> None:
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         bookmark = Bookmark(
             bookmark_id=uuid.uuid4(),
             movie_id=movie_id,

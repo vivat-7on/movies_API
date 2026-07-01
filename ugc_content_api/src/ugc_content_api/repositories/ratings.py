@@ -63,7 +63,7 @@ class MovieRatingRepo(IMovieRatingRepo):
         movie_id: uuid.UUID,
         score: int,
     ) -> MovieRating:
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
 
         rating = await self.db.movie_ratings.find_one_and_update(
             {"movie_id": str(movie_id), "user_id": str(user_id)},

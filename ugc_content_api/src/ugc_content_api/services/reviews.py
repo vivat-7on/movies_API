@@ -67,7 +67,7 @@ class ReviewService:
         title: str,
         text: str,
     ) -> Review:
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         review = Review(
             review_id=uuid.uuid4(),
             user_id=user_id,
@@ -86,7 +86,7 @@ class ReviewService:
         title: str,
         text: str,
     ) -> ReviewDetails:
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
 
         review = await self.review_repo.get_review_by_id(review_id=review_id)
 

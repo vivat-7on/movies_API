@@ -13,7 +13,7 @@ USER_ID = uuid.uuid4()
 MOVIE_ID = uuid.uuid4()
 TITLE = "test_title"
 TEXT = "test_text"
-NOW = datetime.datetime.now(datetime.UTC)
+NOW = datetime.datetime.now(datetime.timezone.utc)
 
 REVIEW = Review(
     review_id=REVIEW_ID,

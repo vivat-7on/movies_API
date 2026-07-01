@@ -112,7 +112,7 @@ class ReviewVoteRepo(IReviewVoteRepo):
         user_id: uuid.UUID,
         score: int,
     ) -> None:
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
 
         await self.db.review_votes.update_one(
             {"user_id": str(user_id), "review_id": str(review_id)},

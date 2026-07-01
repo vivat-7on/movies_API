@@ -52,7 +52,7 @@ class FakeMovieRatingRepo:
         return None
 
     async def upsert_user_score(self, user_id, movie_id, score):
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         rating = MovieRating(
             movie_id=movie_id,
             user_id=user_id,
@@ -128,7 +128,7 @@ class FakeReviewVoteRepo:
         user_id,
         score,
     ):
-        now = datetime.datetime.now(datetime.UTC)
+        now = datetime.datetime.now(datetime.timezone.utc)
         vote = ReviewVote(
             review_id=review_id,
             user_id=user_id,
