@@ -3,6 +3,7 @@ from typing import Protocol
 
 from ugc_content_api.entities.reviews import (
     Review,
+    ReviewDetails,
     ReviewSortOptions,
     ReviewSummary,
     ReviewVote,
@@ -32,6 +33,12 @@ class IReviewRepo(Protocol):
         self,
         review_id: uuid.UUID,
     ) -> None: ...
+
+    async def get_review_details_by_movie_id(
+        self,
+        movie_id: uuid.UUID,
+        sort: ReviewSortOptions | None = None,
+    ) -> list[ReviewDetails]: ...
 
 
 class IReviewVoteRepo(Protocol):

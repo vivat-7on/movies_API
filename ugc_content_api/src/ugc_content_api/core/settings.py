@@ -18,8 +18,8 @@ class MongoSettings(BaseSettings):
 
 
 class AuthSettings(BaseSettings):
-    JWT_SECRET_KEY: str = "secret"
-    JWT_ALGORITHM: str = "HS256"
+    JWT_SECRET_KEY: str
+    JWT_ALGORITHM: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
@@ -29,7 +29,7 @@ class AuthSettings(BaseSettings):
 
 @lru_cache
 def get_auth_settings() -> AuthSettings:
-    return AuthSettings()
+    return AuthSettings()  # type: ignore[call-arg]
 
 
 @lru_cache

@@ -2,7 +2,12 @@ import datetime
 
 import pytest
 from ugc_content_api.entities.ratings import MovieRating, MovieRatingSummary
-from ugc_content_api.entities.reviews import Review, ReviewSummary, ReviewVote
+from ugc_content_api.entities.reviews import (
+    Review,
+    ReviewDetails,
+    ReviewSummary,
+    ReviewVote,
+)
 from ugc_content_api.services.bookmarks import BookmarkService
 from ugc_content_api.services.ratings import MovieRatingService
 from ugc_content_api.services.reviews import ReviewService
@@ -109,6 +114,23 @@ class FakeReviewRepo:
         self.deleted_reviews.append(review_id)
         self.reviews = [
             review for review in self.reviews if review.review_id != review_id
+        ]
+
+    async def get_review_details_by_movie_id(self, movie_id, sort):
+        return [
+            ReviewDetails(
+                review_id=review.review_id,
+                user_id=review.user_id,
+                movie_id=review.movie_id,
+                title=review.title,
+                text=review.text,
+                likes=0,
+                dislikes=0,
+                created_at=review.created_at,
+                updated_at=review.updated_at,
+            )
+            for review in self.reviews
+            if review.movie_id == movie_id
         ]
 
 

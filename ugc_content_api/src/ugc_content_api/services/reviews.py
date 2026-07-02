@@ -46,19 +46,10 @@ class ReviewService:
         movie_id: uuid.UUID,
         sort: ReviewSortOptions | None = None,
     ) -> list[ReviewDetails]:
-        reviews = await self.review_repo.get_reviews_by_movie_id(
+        return await self.review_repo.get_review_details_by_movie_id(
             movie_id=movie_id,
             sort=sort,
         )
-
-        reviews_details = []
-        for review in reviews:
-            review_details = await self.get_review_details(
-                review_id=review.review_id,
-            )
-            reviews_details.append(review_details)
-
-        return reviews_details
 
     async def create_review(
         self,

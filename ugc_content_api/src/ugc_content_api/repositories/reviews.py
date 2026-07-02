@@ -7,6 +7,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from ugc_content_api.entities.reviews import (
     Review,
+    ReviewDetails,
     ReviewSortOptions,
     ReviewSummary,
     ReviewVote,
@@ -18,6 +19,13 @@ SORT_MAP = {
     ReviewSortOptions.created_at_desc: [("created_at", -1)],
     ReviewSortOptions.title_asc: [("title", 1)],
     ReviewSortOptions.title_desc: [("title", -1)],
+}
+
+AGG_SORT_MAP = {
+    ReviewSortOptions.created_at_asc: {"created_at": 1},
+    ReviewSortOptions.created_at_desc: {"created_at": -1},
+    ReviewSortOptions.title_asc: {"title": 1},
+    ReviewSortOptions.title_desc: {"title": -1},
 }
 
 
@@ -89,6 +97,70 @@ class ReviewRepo(IReviewRepo):
     ) -> None:
         await self.db.reviews.delete_one({"review_id": str(review_id)})
 
+    async def get_review_details_by_movie_id(
+        self,
+        movie_id: uuid.UUID,
+        sort: ReviewSortOptions | None = None,
+    ) -> list[ReviewDetails]:
+        pipeline: list[dict[str, Any]] = [
+            {"$match": {"movie_id": str(movie_id)}},
+            {
+                "$lookup": {
+                    "from": "review_votes",
+                    "localField": "review_id",
+                    "foreignField": "review_id",
+                    "as": "votes",
+                },
+            },
+            {
+                "$addFields": {
+                    "likes": {
+                        "$size": {
+                            "$filter": {
+                                "input": "$votes",
+                                "as": "vote",
+                                "cond": {"$eq": ["$$vote.score", 10]},
+                            },
+                        },
+                    },
+                    "dislikes": {
+                        "$size": {
+                            "$filter": {
+                                "input": "$votes",
+                                "as": "vote",
+                                "cond": {"$eq": ["$$vote.score", 0]},
+                            },
+                        },
+                    },
+                },
+            },
+            {"$project": {"votes": 0, "_id": 0}},
+        ]
+
+        if sort is not None:
+            pipeline.append({"$sort": AGG_SORT_MAP[sort]})
+
+        cursor = await self.db.reviews.aggregate(pipeline)
+        docs = await cursor.to_list(length=None)
+
+        if not docs:
+            return []
+
+        return [
+            ReviewDetails(
+                review_id=uuid.UUID(doc["review_id"]),
+                user_id=uuid.UUID(doc["user_id"]),
+                movie_id=uuid.UUID(doc["movie_id"]),
+                title=doc["title"],
+                text=doc["text"],
+                likes=doc["likes"],
+                dislikes=doc["dislikes"],
+                created_at=doc["created_at"],
+                updated_at=doc["updated_at"],
+            )
+            for doc in docs
+        ]
+
     @staticmethod
     def _map_review(document: dict) -> Review:
         return Review(
@@ -123,6 +195,7 @@ class ReviewVoteRepo(IReviewVoteRepo):
                 },
                 "$setOnInsert": {
                     "review_id": str(review_id),
+                    "user_id": str(user_id),
                     "created_at": now,
                 },
             },
