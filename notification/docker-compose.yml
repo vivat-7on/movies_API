@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: notification_postgres
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - notification-postgres-data:/var/lib/postgresql/data
+
+  rabbit:
+    image: rabbitmq:4.3.2-management
+    container_name: rabbitmq
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - notification-rabbitmq-data:/var/lib/rabbitmq
+
+  notification-api:
+    build: .
+    container_name: notification-api
+    restart: always
+    command: uvicorn notification.api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: .
+    command: python -m notification.worker.main
+
+volumes:
+  notification-postgres-data:
+  notification-rabbitmq-data:
