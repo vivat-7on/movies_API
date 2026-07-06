@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 
-def create_async_engine_from_setting(settings: PostgresSettings) -> AsyncEngine:
+def create_async_engine_from_settings(settings: PostgresSettings) -> AsyncEngine:
     return create_async_engine(url=settings.async_url, echo=False)
 
 
