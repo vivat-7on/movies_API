@@ -1,7 +1,7 @@
 import uuid
 from dataclasses import dataclass
 
-from notification.db.tables import Notification
+from notification.db.tables import Notification, NotificationStatus
 from notification.interfaces.notification_repo import INotificationRepository
 from notification.interfaces.publisher import IRabbitPublisher
 from notification.schemas.events import UserRegisteredEvent
@@ -18,7 +18,7 @@ class NotificationService:
     ) -> uuid.UUID:
         notification = Notification(
             user_id=data.user_id,
-            template_code=data.template_code,
+            template_code="welcome",
             event_type="user_registered",
             payload=data.payload,
         )
@@ -26,5 +26,9 @@ class NotificationService:
             notification=notification,
         )
         await self.publisher.publish(notification_id=notification.id)
+        await self.repo.update_status(
+            notification=notification,
+            status=NotificationStatus.QUEUED,
+        )
 
         return notification.id
