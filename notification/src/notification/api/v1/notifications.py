@@ -28,20 +28,23 @@ async def broadcast(
     response_model=NotificationResponse,
 )
 async def get_notification(
-    notification_id: int,
+    notification_id: uuid.UUID,
     service: NotificationService = Depends(create_notification_service),
 ) -> NotificationResponse:
-    notificaton = service.get_notification_by_id(
+    notification = await service.get_notification_by_id(
         notification_id=notification_id,
     )
 
-    if notificaton is None:
+    if notification is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
     return NotificationResponse(
-        user_id=notificaton.user_id,
-        status=notificaton.status,
-        created_at=notificaton.created_at,
-        last_error=notificaton.last_error,
-        sent_at=notificaton.sent_at,
+        id=notification.id,
+        user_id=notification.user_id,
+        event_type=notification.event_type,
+        template_code=notification.template_code,
+        status=notification.status,
+        created_at=notification.created_at,
+        last_error=notification.last_error,
+        sent_at=notification.sent_at,
     )

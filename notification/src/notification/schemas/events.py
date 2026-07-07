@@ -21,7 +21,10 @@ class NewMovieEvent(BaseModel):
 
 
 class NotificationResponse(BaseModel):
+    id: uuid.UUID
     user_id: uuid.UUID
+    event_type: str
+    template_code: str
     status: str
     created_at: datetime.datetime
     last_error: str | None = None

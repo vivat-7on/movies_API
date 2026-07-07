@@ -53,4 +53,4 @@ class NotificationHandler:
             subject=subject,
             body=body,
         )
-        await self.repo.mark_a_sent(notification=notification)
+        await self.repo.mark_as_sent(notification=notification)
