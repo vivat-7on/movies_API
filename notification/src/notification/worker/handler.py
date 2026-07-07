@@ -1,11 +1,11 @@
 import uuid
 
+from notification.core.exceptions import NotificationNotFound
 from notification.db.tables import NotificationStatus
 from notification.interfaces.notification_repo import INotificationRepository
 from notification.services.auth_client import AuthClient
 from notification.services.email_sender import EmailSender
 from notification.services.template_renderer import TemplateRenderer
-from notification.worker.exceptions import NotificationNotFound
 
 
 class NotificationHandler:
@@ -27,7 +27,9 @@ class NotificationHandler:
         )
 
         if notification is None:
-            raise NotificationNotFound(notification_id)
+            raise NotificationNotFound(
+                f"Notification with {notification_id} not found",
+            )
 
         await self.repo.update_status(
             notification=notification,

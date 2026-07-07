@@ -10,6 +10,7 @@ Backend-платформа онлайн-кинотеатра, построенн
 - FastAPI API для контента
 - Auth-сервис с JWT/OAuth2
 - Redis caching и rate limiting
+- Notification-сервис для асинхронной отправки email-уведомлений
 - Nginx gateway
 - observability through OpenTelemetry and Jaeger
 
@@ -55,18 +56,36 @@ Backend-платформа онлайн-кинотеатра, построенн
     - Принимает пользовательские события
     - Публикует пользовательские события в Kafka
 
-6  **UGC ETL**
+6.  **UGC ETL**
 
 - Читает события пользовательской активности из Kafka
 - Обрабатывает события batch'ами
 - Загружает данные в ClickHouse
 - Коммитит Kafka offset только после успешной вставки
 
-7  **UGC content API**
+7.  **UGC content API**
 
 - Принимает оценки, рецензии и закладки
 - Сохраняет всё в MongoDB
 - Позволяет получать информацию по оценкам, рецензиям и закладкам
+
+8. **Notification**
+Состоит из двух компонентов.
+
+ ### Notification API 
+
+- Принимает события от других сервисов
+- Создаёт уведомление в PostgreSQL
+- Публикует `notification_id` в RabbitMQ
+
+ ### Worker 
+
+- Читает `notification_id` из RabbitMQ
+- Получает уведомление из PostgreSQL
+- Получает данные пользователя из Auth-service
+- Рендерит email по шаблону
+- Отправляет письмо пользователю
+- Обновляет статус уведомления
 
 ---
 
@@ -211,6 +230,43 @@ curl "http://localhost:8123" \
 - усложняется локальный запуск;
 - требуется отдельная настройка мониторинга, логирования и CI/CD.
 
+## Notification Service
+
+Архитектура сервиса:
+
+```
+Other services
+        │
+        ▼
+ Notification API
+        │
+        ▼
+ PostgreSQL
+        │
+        ▼
+ RabbitMQ
+        │
+        ▼
+ Notification Worker
+        │
+        ├── Auth Service
+        └── SMTP
+```
+
+### Supported events
+
+- user_registered
+- broadcast
+
+Notification проходит следующие статусы:
+
+- CREATED
+- QUEUED
+- PROCESSING
+- SENT
+- FAILED
+
+
 ## Graceful degradation
 
 Административная панель не хранит локальные пароли пользователей.
@@ -294,6 +350,10 @@ Pipeline автоматически выполняет:
 
 - **Python 3.11**
 - **FastAPI**
+- **Alembic**
+- **Jinja2**
+- **SqlAlchemy**
+- **aip-pika**
 - **Elasticsearch 8.x**
 - **Redis**
 - **PostgreSQL**
@@ -308,6 +368,7 @@ Pipeline автоматически выполняет:
 - **ClickHouse**
 - **Flask**
 - **MongoDB**
+- **RabbitMQ**
 
 ---
 
@@ -332,6 +393,7 @@ docker compose up --build
 - ETL сервисы
 - Django Admin
 - Nginx Gateway
+- RabbitMQ
 ---
 
 ## Доступные сервисы

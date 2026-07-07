@@ -1,9 +1,10 @@
 import uuid
 
-from notification.db.tables import Notification, NotificationStatus
-from notification.interfaces.notification_repo import INotificationRepository
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from notification.db.tables import Notification, NotificationStatus
+from notification.interfaces.notification_repo import INotificationRepository
 
 
 class NotificationRepository(INotificationRepository):
@@ -33,3 +34,6 @@ class NotificationRepository(INotificationRepository):
     ) -> None:
         notification.status = status
         await self.session.flush()
+
+    async def commit(self) -> None:
+        await self.session.commit()

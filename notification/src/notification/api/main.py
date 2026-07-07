@@ -2,9 +2,10 @@ from contextlib import asynccontextmanager
 
 import aio_pika
 from fastapi import FastAPI
+
 from notification.broker.settings import RabbitSettings
 
-from .v1.events import router
+from .v1 import events, notifications
 
 
 @asynccontextmanager
@@ -29,7 +30,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(router=router, prefix="/api/v1/notification")
+app.include_router(router=events.router, prefix="/api/v1/notification")
+app.include_router(router=notifications.router, prefix="/api/v1/notification")
 
 
 @app.get("/notification/health")

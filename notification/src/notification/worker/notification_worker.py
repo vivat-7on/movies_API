@@ -2,6 +2,7 @@ import logging
 import uuid
 
 from notification.db.repository import NotificationRepository
+from notification.db.tables import NotificationStatus
 from notification.services.auth_client import AuthClient
 from notification.services.email_sender import EmailSender
 from notification.services.template_renderer import TemplateRenderer
@@ -42,7 +43,20 @@ class NotificationWorker:
 
                 logger.debug("Notification %s sent", notification_id)
 
-            except Exception:
+            except Exception as exc:
                 await session.rollback()
-                logger.debug("Notification %s didn't send", notification_id)
-                raise
+
+                async with self.session_factory() as failed_session:
+                    failed_repo = NotificationRepository(session=failed_session)
+                    notification = await failed_repo.get_by_id(
+                        notification_id=notification_id,
+                    )
+
+                    if notification is not None:
+                        notification.last_error = str(exc)
+                        await failed_repo.update_status(
+                            notification=notification,
+                            status=NotificationStatus.FAILED,
+                        )
+                        await failed_session.commit()
+                logger.error("Notification %s failed", notification_id)

@@ -1,12 +1,13 @@
 from typing import AsyncGenerator
 
-from notification.db.settings import PostgresSettings
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+
+from notification.db.settings import PostgresSettings
 
 
 def create_async_engine_from_settings(settings: PostgresSettings) -> AsyncEngine:
@@ -32,5 +33,3 @@ async def get_postgres_session(
         except Exception:
             await session.rollback()
             raise
-        else:
-            await session.commit()
