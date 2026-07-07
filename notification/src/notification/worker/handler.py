@@ -53,8 +53,4 @@ class NotificationHandler:
             subject=subject,
             body=body,
         )
-
-        await self.repo.update_status(
-            notification=notification,
-            status=NotificationStatus.SENT,
-        )
+        await self.repo.mark_a_sent(notification=notification)

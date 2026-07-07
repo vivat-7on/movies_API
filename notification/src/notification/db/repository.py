@@ -1,3 +1,4 @@
+import datetime
 import uuid
 
 from sqlalchemy import select
@@ -37,3 +38,8 @@ class NotificationRepository(INotificationRepository):
 
     async def commit(self) -> None:
         await self.session.commit()
+
+    async def mark_a_sent(self, notification: Notification) -> None:
+        notification.status = NotificationStatus.SENT
+        notification.sent_at = datetime.datetime.now()
+        await self.session.flush()

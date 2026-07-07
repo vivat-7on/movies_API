@@ -92,3 +92,14 @@ class NotificationService:
             notification_ids.append(notification.id)
 
         return notification_ids
+
+    async def get_notification_by_id(
+        self,
+        notification_id: uuid.UUID,
+    ) -> Notification | None:
+        notification = await self.repo.get_by_id(notification_id)
+
+        if notification is None:
+            return None
+
+        return notification
