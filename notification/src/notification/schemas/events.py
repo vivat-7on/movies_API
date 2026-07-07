@@ -12,3 +12,8 @@ class BroadcastEvent(BaseModel):
     user_ids: list[uuid.UUID]
     template_code: str
     payload: dict = Field(default_factory=dict)
+
+
+class NewMovieEvent(BaseModel):
+    user_ids: list[uuid.UUID]
+    movie_title: str

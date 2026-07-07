@@ -3,6 +3,7 @@ import uuid
 
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
+
 from notification.worker.notification_worker import NotificationWorker
 
 

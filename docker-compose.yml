@@ -247,7 +247,7 @@ services:
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -264,6 +264,61 @@ services:
       mongo:
         condition: service_healthy
 
+  rabbit:
+    image: rabbitmq:4.3.2-management
+    container_name: rabbit
+    restart: always
+    env_file:
+      - ./notification/.env
+    ports:
+      - "15672:15672"
+    volumes:
+      - rabbit-data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  migration-notification-service:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    env_file:
+      - ./notification/.env
+    command: alembic upgrade head
+    depends_on:
+      db:
+        condition: service_healthy
+
+  notification-api:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    container_name: notification-api
+    env_file:
+      - ./notification/.env
+    restart: always
+    depends_on:
+      migration-notification-service:
+        condition: service_completed_successfully
+      rabbit:
+        condition: service_healthy
+
+  notification-worker:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    env_file:
+      - ./notification/.env
+    command: python -m notification.worker.main
+    depends_on:
+      migration-notification-service:
+        condition: service_completed_successfully
+      rabbit:
+        condition: service_healthy
+
+
 volumes:
   movies-postgres-data:
   movies-es-data:
@@ -272,3 +327,4 @@ volumes:
   kafka-data:
   clickhouse-data:
   mongo-data:
+  rabbit-data:

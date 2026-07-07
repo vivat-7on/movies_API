@@ -4,7 +4,11 @@ from dataclasses import dataclass
 from notification.db.tables import Notification, NotificationStatus
 from notification.interfaces.notification_repo import INotificationRepository
 from notification.interfaces.publisher import IRabbitPublisher
-from notification.schemas.events import BroadcastEvent, UserRegisteredEvent
+from notification.schemas.events import (
+    BroadcastEvent,
+    NewMovieEvent,
+    UserRegisteredEvent,
+)
 
 
 @dataclass(frozen=True)
@@ -57,6 +61,34 @@ class NotificationService:
             await self.repo.commit()
 
             await self.publisher.publish(notification_id=notification.id)
+            notification_ids.append(notification.id)
+
+        return notification_ids
+
+    async def create_new_movie_notification(
+        self,
+        data: NewMovieEvent,
+    ) -> list[uuid.UUID]:
+        notification_ids = []
+
+        for user_id in data.user_ids:
+            notification = Notification(
+                user_id=user_id,
+                template_code="new_movie",
+                event_type="new_movie",
+                payload={"movie_title": data.movie_title},
+            )
+            notification = await self.repo.create_notification(
+                notification=notification,
+            )
+            await self.repo.update_status(
+                notification=notification,
+                status=NotificationStatus.QUEUED,
+            )
+
+            await self.repo.commit()
+            await self.publisher.publish(notification_id=notification.id)
+
             notification_ids.append(notification.id)
 
         return notification_ids

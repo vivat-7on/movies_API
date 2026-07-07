@@ -1,6 +1,7 @@
 import asyncio
 
 import aio_pika
+
 from notification.broker.settings import RabbitSettings
 from notification.db.connection import (
     create_async_engine_from_settings,

@@ -1,6 +1,7 @@
 import uuid
 
 import aio_pika
+
 from notification.interfaces.publisher import IRabbitPublisher
 
 

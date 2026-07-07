@@ -1,6 +1,8 @@
 from typing import AsyncGenerator
 
 from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from notification.broker.publisher import RabbitPublisher
 from notification.broker.settings import RabbitSettings
 from notification.db.connection import (
@@ -11,7 +13,6 @@ from notification.db.connection import (
 from notification.db.repository import NotificationRepository
 from notification.db.settings import PostgresSettings
 from notification.services.notification import NotificationService
-from sqlalchemy.ext.asyncio import AsyncSession
 
 postgres_settings = PostgresSettings()
 async_engine = create_async_engine_from_settings(settings=postgres_settings)

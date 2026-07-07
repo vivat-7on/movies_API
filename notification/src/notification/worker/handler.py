@@ -42,7 +42,10 @@ class NotificationHandler:
 
         subject, body = await self.template_renderer.render(
             template_code=notification.template_code,
-            context={"first_name": user.first_name},
+            context={
+                "first_name": user.first_name,
+                **notification.payload,
+            },
         )
 
         await self.email_sender.send(
