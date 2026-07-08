@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
-  checks:
+  ugc-content-ci:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -43,12 +43,50 @@ jobs:
       - name: Run tests
         run: pytest
 
+  notification-ci:
+    runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: notification
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with wemake
+        run: |
+          flake8 src tests --format=html --htmldir=flake8-report
+
+      - name: Upload flake8 HTML report
+        if: always()
+        uses: actions/upload-artifact@4
+        with:
+          name: notification-flake8-report-3.11
+          path: notification/flake8-report
+
+      - name: Type check with mypy
+        run: mypy src
+
+      - name: Run tests
+        run: pytest
 
   notify:
     if: ${{ success() }}
     runs-on: ubuntu-latest
-    needs: checks
+    needs:
+      - ugc-content-ci
+      - notification-ci
     steps:
       - name: Send Telegram notification
         uses: appleboy/telegram-action@master
