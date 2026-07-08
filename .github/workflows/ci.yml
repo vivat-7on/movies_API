@@ -70,7 +70,7 @@ jobs:
 
       - name: Upload flake8 HTML report
         if: always()
-        uses: actions/upload-artifact@4
+        uses: actions/upload-artifact@v4
         with:
           name: notification-flake8-report-3.11
           path: notification/flake8-report
