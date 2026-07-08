@@ -59,4 +59,4 @@ class NotificationWorker:
                             status=NotificationStatus.FAILED,
                         )
                         await failed_session.commit()
-                logger.error("Notification %s failed", notification_id)
+                logger.exception("Notification %s failed", notification_id)
