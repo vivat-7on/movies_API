@@ -30,14 +30,9 @@ class NotificationWorker:
 
         async with self.session_factory() as session:
             repo = NotificationRepository(session=session)
-            handler = NotificationHandler(
-                repo=repo,
-                auth_client=self.auth_client,
-                email_sender=self.email_sender,
-                template_renderer=self.template_renderer,
-            )
+            handler = self._create_handler(repo=repo)
 
-            try:
+            try:  # noqa: WPS229
                 await handler.handle(notification_id=notification_id)
                 await session.commit()
 
@@ -46,17 +41,40 @@ class NotificationWorker:
             except Exception as exc:
                 await session.rollback()
 
-                async with self.session_factory() as failed_session:
-                    failed_repo = NotificationRepository(session=failed_session)
-                    notification = await failed_repo.get_by_id(
-                        notification_id=notification_id,
-                    )
-
-                    if notification is not None:
-                        notification.last_error = str(exc)
-                        await failed_repo.update_status(
-                            notification=notification,
-                            status=NotificationStatus.FAILED,
-                        )
-                        await failed_session.commit()
+                await self._mark_as_failed(
+                    notification_id=notification_id,
+                    exc=exc,
+                )
                 logger.exception("Notification %s failed", notification_id)
+
+    def _create_handler(
+        self,
+        repo: NotificationRepository,
+    ) -> NotificationHandler:
+        return NotificationHandler(
+            repo=repo,
+            auth_client=self.auth_client,
+            email_sender=self.email_sender,
+            template_renderer=self.template_renderer,
+        )
+
+    async def _mark_as_failed(
+        self,
+        notification_id: uuid.UUID,
+        exc: Exception,
+    ) -> None:
+        async with self.session_factory() as failed_session:
+            failed_repo = NotificationRepository(session=failed_session)
+            notification = await failed_repo.get_by_id(
+                notification_id=notification_id,
+            )
+
+            if notification is None:
+                return
+
+            notification.last_error = str(exc)
+            await failed_repo.update_status(
+                notification=notification,
+                status=NotificationStatus.FAILED,
+            )
+            await failed_session.commit()

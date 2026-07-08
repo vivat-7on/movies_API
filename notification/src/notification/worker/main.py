@@ -17,7 +17,7 @@ from notification.worker.consumer import RabbitConsumer
 from notification.worker.notification_worker import NotificationWorker
 
 
-async def main():
+async def main():  # noqa: WPS217
     rabbit_settings = RabbitSettings()
     postgres_settings = PostgresSettings()
     email_settings = EmailSettings()

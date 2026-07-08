@@ -18,7 +18,7 @@ TEMPLATE_CODES = {
 
 
 class TemplateRenderer:
-    async def render(
+    async def render(  # noqa: WPS210
         self,
         template_code: str,
         context: dict,

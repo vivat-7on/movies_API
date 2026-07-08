@@ -3,9 +3,8 @@ from contextlib import asynccontextmanager
 import aio_pika
 from fastapi import FastAPI
 
+from notification.api.v1 import events, notifications
 from notification.broker.settings import RabbitSettings
-
-from .v1 import events, notifications
 
 
 @asynccontextmanager

@@ -21,7 +21,7 @@ class NotificationHandler:
         self.email_sender = email_sender
         self.template_renderer = template_renderer
 
-    async def handle(self, notification_id: uuid.UUID) -> None:
+    async def handle(self, notification_id: uuid.UUID) -> None:  # noqa: WPS217
         notification = await self.repo.get_by_id(
             notification_id=notification_id,
         )

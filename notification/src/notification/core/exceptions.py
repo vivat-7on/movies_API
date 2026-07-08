@@ -1,4 +1,6 @@
-class NotificationNotFound(Exception): ...
+class NotificationNotFound(Exception):
+    """Raised when notification is not found."""
 
 
-class UnknownTemplateCode(Exception): ...
+class UnknownTemplateCode(Exception):
+    """Raised when template code is unknown."""
