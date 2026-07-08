@@ -1,3 +1,5 @@
+import uuid
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -71,3 +73,11 @@ class RoleCreateResponse(BaseModel):
 class UserRoleCreateResponse(BaseModel):
     user_id: str
     role_id: str
+
+
+class UserDetailsResponse(BaseModel):
+    id: uuid.UUID
+    login: str
+    email: EmailStr | None
+    first_name: str | None
+    last_name: str | None

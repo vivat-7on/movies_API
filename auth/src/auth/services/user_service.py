@@ -3,6 +3,7 @@ import uuid
 from attr import frozen
 
 from auth.dtos.token import UserDTO
+from auth.dtos.user import UserDetailsDTO
 from auth.exceptions.auth import InvalidCredentials
 from auth.exceptions.role import RoleNotFound
 from auth.exceptions.user import UserNotFound
@@ -67,4 +68,18 @@ class UserService:
         return UserDTO(
             user_id=str(user.id),
             roles=claim.roles or [],
+        )
+
+    async def get_user_by_id(self, user_id: uuid.UUID) -> UserDetailsDTO | None:
+        user = await self.user_repo.get_by_id(user_id=user_id)
+
+        if user is None:
+            return None
+
+        return UserDetailsDTO(
+            id=user.id,
+            login=user.login,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            email=user.email,
         )
