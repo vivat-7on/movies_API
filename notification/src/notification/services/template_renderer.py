@@ -24,7 +24,7 @@ class TemplateRenderer:
         context: dict,
     ) -> tuple[str, str]:
         if template_code not in EMAIL_SUBJECTS or template_code not in TEMPLATE_CODES:
-            raise UnknownTemplateCode(f"Unknow template code: {template_code}")
+            raise UnknownTemplateCode(f"Unknown template code: {template_code}")
 
         template_filename = TEMPLATE_CODES[template_code]
         template_path = BASE_DIR / "templates" / "email" / template_filename
