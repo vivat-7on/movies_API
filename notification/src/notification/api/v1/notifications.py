@@ -4,12 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from notification.api.deps import create_notification_service
+from notification.api.security import verify_service_token
 from notification.schemas.events import BroadcastEvent, NotificationResponse
 from notification.services.notification import NotificationService
 
 router = APIRouter(
     prefix="/notifications",
     tags=["Notifications"],
+    dependencies=[Depends(verify_service_token)],
 )
 
 

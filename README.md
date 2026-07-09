@@ -266,6 +266,21 @@ Notification проходит следующие статусы:
 - SENT
 - FAILED
 
+### Внутренняя авторизация
+
+Notification API предназначен для межсервисного взаимодействия и закрыт service-to-service токеном.
+
+Все запросы к эндпоинтам сервиса должны содержать заголовок:
+
+```http
+X-Service-Token: <service-token>
+```
+Токен задаётся через переменную окружения:
+
+`NOTIFICATION_SERVICE_TOKEN=your-secret-token`
+
+Если заголовок отсутствует, сервис вернёт 401 Unauthorized.
+Если токен неверный, сервис вернёт 403 Forbidden.
 
 ## Graceful degradation
 
