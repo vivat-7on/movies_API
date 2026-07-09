@@ -22,7 +22,10 @@ class AuthClient:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 self.auth_settings.url.format(user_id=user_id),
-                headers={"X-Request-Id": str(uuid.uuid4())},
+                headers={
+                    "X-Request-Id": str(uuid.uuid4()),
+                    "X-Service-Token": self.auth_settings.AUTH_SERVICE_TOKEN,
+                },
                 timeout=5.0,
             )
             response.raise_for_status()

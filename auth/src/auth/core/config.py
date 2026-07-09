@@ -40,6 +40,7 @@ class AuthSettings(BaseConfig):
     REFRESH_TOKEN_TTL_DAYS: int = 7
     DEFAULT_ROLE_NAME: str = "user"
     DEBUG: bool = True
+    AUTH_SERVICE_TOKEN: str = "your-service-token"
 
 
 class YandexOAuthSettings(BaseConfig):

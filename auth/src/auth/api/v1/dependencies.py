@@ -1,6 +1,7 @@
+import secrets
 from functools import lru_cache
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, Header, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -226,3 +227,20 @@ def require_roles(required_roles: list[str]):
         return user
 
     return dependency
+
+
+async def verify_service_token(
+    x_service_token: str | None = Header(default=None),
+    settings: AuthSettings = Depends(get_auth_settings),
+) -> None:
+    if not x_service_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-Service-Token",
+        )
+
+    if not secrets.compare_digest(x_service_token, settings.AUTH_SERVICE_TOKEN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden",
+        )

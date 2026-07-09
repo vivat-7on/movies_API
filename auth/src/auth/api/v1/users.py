@@ -3,7 +3,11 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
-from auth.api.v1.dependencies import create_user_service, require_roles
+from auth.api.v1.dependencies import (
+    create_user_service,
+    require_roles,
+    verify_service_token,
+)
 from auth.api.v1.schemas import UserDetailsResponse, UserRoleCreateResponse
 from auth.dtos.token import UserDTO
 from auth.services.user_service import UserService
@@ -44,7 +48,11 @@ async def remove_user_role(
     )
 
 
-@router.get("/{user_id}", response_model=UserDetailsResponse)
+@router.get(
+    "/{user_id}",
+    response_model=UserDetailsResponse,
+    dependencies=[Depends(verify_service_token)],
+)
 async def get_user(
     user_id: uuid.UUID,
     service: UserService = Depends(create_user_service),
