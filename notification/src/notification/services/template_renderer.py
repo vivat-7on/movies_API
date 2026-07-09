@@ -1,10 +1,11 @@
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from notification.core.exceptions import UnknownTemplateCode
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+TEMPLATE_DIR = BASE_DIR / "templates" / "email"
 
 EMAIL_SUBJECTS = {
     "welcome": "Добро пожаловать!",
@@ -18,7 +19,13 @@ TEMPLATE_CODES = {
 
 
 class TemplateRenderer:
-    async def render(  # noqa: WPS210
+    def __init__(self) -> None:
+        self.env = Environment(
+            loader=FileSystemLoader(TEMPLATE_DIR),
+            autoescape=select_autoescape(["html"]),
+        )
+
+    def render(  # noqa: WPS210
         self,
         template_code: str,
         context: dict,
@@ -26,14 +33,6 @@ class TemplateRenderer:
         if template_code not in EMAIL_SUBJECTS or template_code not in TEMPLATE_CODES:
             raise UnknownTemplateCode(f"Unknown template code: {template_code}")
 
-        template_filename = TEMPLATE_CODES[template_code]
-        template_path = BASE_DIR / "templates" / "email" / template_filename
+        template = self.env.get_template(TEMPLATE_CODES[template_code])
 
-        template_text = template_path.read_text(encoding="utf-8")
-
-        template = Template(template_text)
-        rendered_html = template.render(**context)
-
-        subject = EMAIL_SUBJECTS[template_code]
-
-        return subject, rendered_html
+        return EMAIL_SUBJECTS[template_code], template.render(**context)

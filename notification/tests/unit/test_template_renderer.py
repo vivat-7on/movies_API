@@ -7,7 +7,7 @@ from notification.services.template_renderer import TemplateRenderer
 async def test_render_welcome_template():
     renderer = TemplateRenderer()
 
-    subject, body = await renderer.render(
+    subject, body = renderer.render(
         template_code="welcome", context={"first_name": "Valerii"}
     )
 
@@ -21,6 +21,4 @@ async def test_render_unknown_template_code_raises_error():
     renderer = TemplateRenderer()
 
     with pytest.raises(UnknownTemplateCode):
-        await renderer.render(
-            template_code="unknown", context={"first_name": "Valerii"}
-        )
+        renderer.render(template_code="unknown", context={"first_name": "Valerii"})
