@@ -43,3 +43,13 @@ class NotificationRepository(INotificationRepository):
         notification.status = NotificationStatus.SENT
         notification.sent_at = datetime.datetime.now(datetime.UTC)
         await self.session.flush()
+
+    async def mark_as_failed(
+        self,
+        notification: Notification,
+        error: str,
+    ) -> None:
+        notification.status = NotificationStatus.FAILED
+        notification.last_error = error
+        notification.attempts += 1
+        await self.session.flush()

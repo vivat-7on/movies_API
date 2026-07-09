@@ -24,7 +24,6 @@ class RabbitConsumer:
         self,
         message: AbstractIncomingMessage,
     ) -> None:
-        async with message.process():
+        async with message.process(requeue=True):
             notification_id = uuid.UUID(message.body.decode())
-
             await self.worker.process(notification_id=notification_id)

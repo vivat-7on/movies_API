@@ -24,3 +24,9 @@ class INotificationRepository(Protocol):
     async def commit(self) -> None: ...
 
     async def mark_as_sent(self, notification: Notification) -> None: ...
+
+    async def mark_as_failed(
+        self,
+        notification: Notification,
+        error: str,
+    ) -> None: ...
