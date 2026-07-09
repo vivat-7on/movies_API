@@ -10,17 +10,8 @@ from notification.broker.settings import RabbitSettings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     rabbit_settings = RabbitSettings()
-
     connection = await aio_pika.connect_robust(rabbit_settings.dsn)
-    channel = await connection.channel()
-
-    await channel.declare_queue(
-        "notifications",
-        durable=True,
-    )
-
     app.state.rabbit_connection = connection
-    app.state.rabbit_channel = channel
 
     yield
 
