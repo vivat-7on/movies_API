@@ -2,19 +2,19 @@ import uuid
 
 from notification.core.exceptions import NotificationNotFound
 from notification.db.tables import NotificationStatus
+from notification.interfaces.email_sender import IEmailSender
+from notification.interfaces.http_client import IAuthClient
+from notification.interfaces.jinja_renderer import ITemplateRenderer
 from notification.interfaces.notification_repo import INotificationRepository
-from notification.services.auth_client import AuthClient
-from notification.services.email_sender import EmailSender
-from notification.services.template_renderer import TemplateRenderer
 
 
 class NotificationHandler:
     def __init__(
         self,
         repo: INotificationRepository,
-        auth_client: AuthClient,
-        email_sender: EmailSender,
-        template_renderer: TemplateRenderer,
+        auth_client: IAuthClient,
+        email_sender: IEmailSender,
+        template_renderer: ITemplateRenderer,
     ) -> None:
         self.repo = repo
         self.auth_client = auth_client
@@ -40,7 +40,7 @@ class NotificationHandler:
             user_id=notification.user_id,
         )
 
-        subject, body = await self.template_renderer.render(
+        subject, body = self.template_renderer.render(
             template_code=notification.template_code,
             context={
                 "first_name": user.first_name,

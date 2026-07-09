@@ -29,19 +29,20 @@ class NotificationService:
         notification = await self.repo.create_notification(
             notification=notification,
         )
+        await self.repo.commit()
+        await self.publisher.publish(notification_id=notification.id)
         await self.repo.update_status(
             notification=notification,
             status=NotificationStatus.QUEUED,
         )
         await self.repo.commit()
-        await self.publisher.publish(notification_id=notification.id)
         return notification.id
 
     async def create_broadcast_notifications(
         self,
         data: BroadcastEvent,
     ) -> list[uuid.UUID]:
-        notification_ids = []
+        notifications = []
 
         for user_id in data.user_ids:
             notification = Notification(
@@ -53,23 +54,28 @@ class NotificationService:
             notification = await self.repo.create_notification(
                 notification=notification,
             )
+            notifications.append(notification)
 
+        await self.repo.commit()
+
+        published_ids = []
+
+        for notification in notifications:
+            await self.publisher.publish(notification_id=notification.id)
             await self.repo.update_status(
                 notification=notification,
                 status=NotificationStatus.QUEUED,
             )
-            await self.repo.commit()
+            published_ids.append(notification.id)
 
-            await self.publisher.publish(notification_id=notification.id)
-            notification_ids.append(notification.id)
-
-        return notification_ids
+        await self.repo.commit()
+        return published_ids
 
     async def create_new_movie_notification(
         self,
         data: NewMovieEvent,
     ) -> list[uuid.UUID]:
-        notification_ids = []
+        notifications = []
 
         for user_id in data.user_ids:
             notification = Notification(
@@ -81,17 +87,21 @@ class NotificationService:
             notification = await self.repo.create_notification(
                 notification=notification,
             )
+            notifications.append(notification)
+
+        await self.repo.commit()
+
+        published_ids = []
+        for notification in notifications:
+            await self.publisher.publish(notification_id=notification.id)
             await self.repo.update_status(
                 notification=notification,
                 status=NotificationStatus.QUEUED,
             )
+            published_ids.append(notification.id)
 
-            await self.repo.commit()
-            await self.publisher.publish(notification_id=notification.id)
-
-            notification_ids.append(notification.id)
-
-        return notification_ids
+        await self.repo.commit()
+        return published_ids
 
     async def get_notification_by_id(
         self,

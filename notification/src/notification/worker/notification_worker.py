@@ -1,15 +1,16 @@
 import logging
 import uuid
 
+from notification.adapters.auth.auth_client import AuthClient
+from notification.adapters.email.email_sender import EmailSender
+from notification.adapters.templates.template_renderer import TemplateRenderer
 from notification.db.repository import NotificationRepository
-from notification.db.tables import NotificationStatus
-from notification.services.auth_client import AuthClient
-from notification.services.email_sender import EmailSender
-from notification.services.template_renderer import TemplateRenderer
+from notification.db.tables import Notification
 from notification.worker.handler import NotificationHandler
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+MAX_ATTEMPTS = 3
 
 
 class NotificationWorker:
@@ -41,11 +42,13 @@ class NotificationWorker:
             except Exception as exc:
                 await session.rollback()
 
-                await self._mark_as_failed(
+                notification = await self._mark_as_failed(
                     notification_id=notification_id,
                     exc=exc,
                 )
                 logger.exception("Notification %s failed", notification_id)
+                if notification is not None and notification.attempts < MAX_ATTEMPTS:
+                    raise
 
     def _create_handler(
         self,
@@ -62,7 +65,7 @@ class NotificationWorker:
         self,
         notification_id: uuid.UUID,
         exc: Exception,
-    ) -> None:
+    ) -> Notification | None:
         async with self.session_factory() as failed_session:
             failed_repo = NotificationRepository(session=failed_session)
             notification = await failed_repo.get_by_id(
@@ -70,11 +73,11 @@ class NotificationWorker:
             )
 
             if notification is None:
-                return
+                return None
 
-            notification.last_error = str(exc)
-            await failed_repo.update_status(
+            await failed_repo.mark_as_failed(
                 notification=notification,
-                status=NotificationStatus.FAILED,
+                error=str(exc),
             )
             await failed_session.commit()
+            return notification

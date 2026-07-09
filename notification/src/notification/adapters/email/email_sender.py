@@ -1,14 +1,14 @@
 import asyncio
 import smtplib
-from dataclasses import dataclass
 from email.message import EmailMessage
 
 from notification.core.email_settings import EmailSettings
+from notification.interfaces.email_sender import IEmailSender
 
 
-@dataclass(frozen=True)
-class EmailSender:
-    email_settings: EmailSettings
+class EmailSender(IEmailSender):
+    def __init__(self, email_settings: EmailSettings) -> None:
+        self.email_settings = email_settings
 
     async def send(
         self,

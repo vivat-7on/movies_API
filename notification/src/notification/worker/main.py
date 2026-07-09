@@ -2,6 +2,9 @@ import asyncio
 
 import aio_pika
 
+from notification.adapters.auth.auth_client import AuthClient
+from notification.adapters.email.email_sender import EmailSender
+from notification.adapters.templates.template_renderer import TemplateRenderer
 from notification.broker.settings import RabbitSettings
 from notification.core.auth_settings import AuthSettings
 from notification.core.email_settings import EmailSettings
@@ -10,9 +13,6 @@ from notification.db.connection import (
     create_session_factory,
 )
 from notification.db.settings import PostgresSettings
-from notification.services.auth_client import AuthClient
-from notification.services.email_sender import EmailSender
-from notification.services.template_renderer import TemplateRenderer
 from notification.worker.consumer import RabbitConsumer
 from notification.worker.notification_worker import NotificationWorker
 

@@ -1,28 +1,24 @@
 import uuid
-from dataclasses import dataclass
 
 import httpx
 
 from notification.core.auth_settings import AuthSettings
+from notification.dtos.user import UserData
+from notification.interfaces.http_client import IAuthClient
 
 
-@dataclass(frozen=True)
-class UserData:
-    id: uuid.UUID
-    email: str
-    first_name: str
-    last_name: str
-
-
-@dataclass(frozen=True)
-class AuthClient:
-    auth_settings: AuthSettings
+class AuthClient(IAuthClient):
+    def __init__(self, auth_settings: AuthSettings):
+        self.auth_settings = auth_settings
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> UserData:
         async with httpx.AsyncClient() as client:
             response = await client.get(
                 self.auth_settings.url.format(user_id=user_id),
-                headers={"X-Request-Id": str(uuid.uuid4())},
+                headers={
+                    "X-Request-Id": str(uuid.uuid4()),
+                    "X-Service-Token": self.auth_settings.AUTH_SERVICE_TOKEN,
+                },
                 timeout=5.0,
             )
             response.raise_for_status()

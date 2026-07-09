@@ -1,8 +1,8 @@
 from unittest.mock import patch
 
 import pytest
+from notification.adapters.email.email_sender import EmailSender
 from notification.core.email_settings import EmailSettings
-from notification.services.email_sender import EmailSender
 
 
 @pytest.mark.asyncio
@@ -35,7 +35,7 @@ def test_send_sync_sends_email_via_smtp():
     sender = EmailSender(email_settings=settings)
 
     with patch(
-        "notification.services.email_sender.smtplib.SMTP_SSL",
+        "notification.adapters.email.email_sender.smtplib.SMTP_SSL",
     ) as smtp_cls:
         smtp = smtp_cls.return_value.__enter__.return_value
 

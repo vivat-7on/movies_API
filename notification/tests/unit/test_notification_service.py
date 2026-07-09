@@ -73,7 +73,6 @@ async def test_create_user_registered_notification():
         status=NotificationStatus.QUEUED,
     )
 
-    repo.commit.assert_awaited_once()
     publisher.publish.assert_awaited_once_with(notification_id=notification_id)
 
 

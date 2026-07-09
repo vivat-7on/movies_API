@@ -1,13 +1,12 @@
 import pytest
+from notification.adapters.templates.template_renderer import TemplateRenderer
 from notification.core.exceptions import UnknownTemplateCode
-from notification.services.template_renderer import TemplateRenderer
 
 
-@pytest.mark.asyncio
-async def test_render_welcome_template():
+def test_render_welcome_template():
     renderer = TemplateRenderer()
 
-    subject, body = await renderer.render(
+    subject, body = renderer.render(
         template_code="welcome", context={"first_name": "Valerii"}
     )
 
@@ -16,11 +15,8 @@ async def test_render_welcome_template():
     assert "Добро пожаловать" in body
 
 
-@pytest.mark.asyncio
-async def test_render_unknown_template_code_raises_error():
+def test_render_unknown_template_code_raises_error():
     renderer = TemplateRenderer()
 
     with pytest.raises(UnknownTemplateCode):
-        await renderer.render(
-            template_code="unknown", context={"first_name": "Valerii"}
-        )
+        renderer.render(template_code="unknown", context={"first_name": "Valerii"})

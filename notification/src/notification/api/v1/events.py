@@ -4,10 +4,15 @@ from fastapi import APIRouter, Depends
 from starlette import status
 
 from notification.api.deps import create_notification_service
+from notification.api.security import verify_service_token
 from notification.schemas.events import NewMovieEvent, UserRegisteredEvent
 from notification.services.notification import NotificationService
 
-router = APIRouter(prefix="/events", tags=["Events"])
+router = APIRouter(
+    prefix="/events",
+    tags=["Events"],
+    dependencies=[Depends(verify_service_token)],
+)
 
 
 @router.post(

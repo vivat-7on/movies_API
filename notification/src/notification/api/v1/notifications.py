@@ -4,12 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from notification.api.deps import create_notification_service
+from notification.api.security import verify_service_token
+from notification.db.tables import Notification
 from notification.schemas.events import BroadcastEvent, NotificationResponse
 from notification.services.notification import NotificationService
 
 router = APIRouter(
     prefix="/notifications",
     tags=["Notifications"],
+    dependencies=[Depends(verify_service_token)],
 )
 
 
@@ -30,7 +33,7 @@ async def broadcast(
 async def get_notification(
     notification_id: uuid.UUID,
     service: NotificationService = Depends(create_notification_service),
-) -> NotificationResponse:
+) -> Notification:
     notification = await service.get_notification_by_id(
         notification_id=notification_id,
     )
@@ -38,13 +41,4 @@ async def get_notification(
     if notification is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    return NotificationResponse(
-        id=notification.id,
-        user_id=notification.user_id,
-        event_type=notification.event_type,
-        template_code=notification.template_code,
-        status=notification.status,
-        created_at=notification.created_at,
-        last_error=notification.last_error,
-        sent_at=notification.sent_at,
-    )
+    return notification
