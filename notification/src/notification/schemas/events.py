@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class UserRegisteredEvent(BaseModel):
@@ -29,3 +29,5 @@ class NotificationResponse(BaseModel):
     created_at: datetime.datetime
     last_error: str | None = None
     sent_at: datetime.datetime | None = None
+
+    model_config = ConfigDict(from_attributes=True)
