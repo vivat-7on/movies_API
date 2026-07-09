@@ -1,11 +1,11 @@
 import logging
 import uuid
 
+from notification.adapters.auth.auth_client import AuthClient
+from notification.adapters.email.email_sender import EmailSender
+from notification.adapters.templates.template_renderer import TemplateRenderer
 from notification.db.repository import NotificationRepository
 from notification.db.tables import Notification
-from notification.services.auth_client import AuthClient
-from notification.services.email_sender import EmailSender
-from notification.services.template_renderer import TemplateRenderer
 from notification.worker.handler import NotificationHandler
 
 logger = logging.getLogger(__name__)

@@ -3,8 +3,9 @@ from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from notification.core.exceptions import UnknownTemplateCode
+from notification.interfaces.jinja_renderer import ITemplateRenderer
 
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parents[2]
 TEMPLATE_DIR = BASE_DIR / "templates" / "email"
 
 EMAIL_SUBJECTS = {
@@ -18,7 +19,7 @@ TEMPLATE_CODES = {
 }
 
 
-class TemplateRenderer:
+class TemplateRenderer(ITemplateRenderer):
     def __init__(self) -> None:
         self.env = Environment(
             loader=FileSystemLoader(TEMPLATE_DIR),

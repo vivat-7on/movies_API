@@ -2,8 +2,8 @@ import uuid
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from notification.adapters.auth.auth_client import AuthClient
 from notification.core.auth_settings import AuthSettings
-from notification.services.auth_client import AuthClient
 
 
 @pytest.mark.asyncio
@@ -23,7 +23,7 @@ async def test_get_user_by_id_returns_user_data():
     client.get.return_value = response
 
     with patch(
-        "notification.services.auth_client.httpx.AsyncClient",
+        "notification.adapters.auth.auth_client.httpx.AsyncClient",
     ) as client_cls:
         client_cls.return_value.__aenter__.return_value = client
 
@@ -59,7 +59,7 @@ async def test_get_user_by_id_uses_login_as_first_name_fallback():
     client.get.return_value = response
 
     with patch(
-        "notification.services.auth_client.httpx.AsyncClient",
+        "notification.adapters.auth.auth_client.httpx.AsyncClient",
     ) as client_cls:
         client_cls.return_value.__aenter__.return_value = client
 
