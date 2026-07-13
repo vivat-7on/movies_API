@@ -1,1 +1,9 @@
+SQLAlchemy==2.0.51
 alembic==1.18.5
+fastapi==0.139.0
+pydantic-settings==2.14.2
+psycopg2==2.9.12
+ruff==0.15.21
+mypy==2.3.0
+wemake-python-styleguide==1.6.2
+flake8-html==0.4.3
