@@ -1,0 +1,101 @@
+@startuml
+title Архитектура сервиса профилей онлайн-кинотеатра
+
+left to right direction
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam linetype ortho
+skinparam defaultTextAlignment center
+skinparam nodesep 70
+skinparam ranksep 90
+skinparam packagePadding 25
+skinparam componentPadding 15
+
+actor "Пользователь" as User
+actor "Администратор" as Admin
+
+rectangle "Nginx Gateway" as Nginx
+
+package "Пользователи и профили" {
+    component "Auth Service" as Auth
+    component "Profile Service" as Profile
+    component "Django Admin" as DjangoAdmin
+
+    database "PostgreSQL\nAuth" as AuthDB
+    database "PostgreSQL\nProfiles" as ProfileDB
+}
+
+package "Контент" {
+    component "Movies Service" as Movies
+    component "ETL Service" as ETL
+
+    database "PostgreSQL\nMovies" as MoviesDB
+    database "Elasticsearch" as Elasticsearch
+}
+
+package "Пользовательский контент" {
+    component "UGC Content API" as UGC
+    database "MongoDB" as MongoDB
+}
+
+User --> Nginx : HTTP+JWT
+Admin --> Nginx : HTTP
+
+Nginx --> Auth
+Nginx --> Profile
+Nginx --> Movies
+Nginx --> UGC
+Nginx --> DjangoAdmin
+
+Auth --> AuthDB : пользователи,\nроли, авторизация
+
+Profile --> ProfileDB : CRUD профилей,\nФИО, телефон
+
+DjangoAdmin --> ProfileDB : просмотр профилей\nчерез Django ORM
+
+Movies --> Elasticsearch : чтение и поиск
+
+MoviesDB --> ETL : исходные данные
+ETL --> Elasticsearch : синхронизация
+
+UGC --> MongoDB : закладки,\nоценки, рецензии
+
+note bottom of Auth
+JWT подписывается
+симметричным секретом
+end note
+
+note bottom of Profile
+Проверяет JWT локально
+и извлекает user_id.
+
+Не вызывает Auth Service
+при каждом запросе.
+end note
+
+note bottom of UGC
+Хранит user_id и movie_id.
+
+Не проверяет фильм
+через Movies Service.
+end note
+
+note bottom of DjangoAdmin
+Django Admin и Profile Service
+используют общую базу профилей.
+end note
+
+note bottom of Nginx
+Маршрутизация
+Rate limiting
+X-Request-Id
+end note
+
+' Подсказки для более ровного расположения
+Auth -[hidden]-> Profile
+Profile -[hidden]-> DjangoAdmin
+
+Movies -[hidden]-> ETL
+
+@enduml

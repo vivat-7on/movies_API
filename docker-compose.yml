@@ -76,9 +76,9 @@ services:
       retries: 5
     command: [ "redis-server" ]
 
-  api:
+  movie_api:
     build:
-      context: ./backend
+      context: ./movie
       dockerfile: Dockerfile
     container_name: movies_api
     restart: always
@@ -98,8 +98,6 @@ services:
     restart: always
     env_file:
       - ./auth/.env
-    ports:
-      - "8080:8000" # TODO
     depends_on:
       db:
         condition: service_healthy
@@ -117,7 +115,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - api
+      - movie_api
       - auth
       - admin
       - ugc_api
