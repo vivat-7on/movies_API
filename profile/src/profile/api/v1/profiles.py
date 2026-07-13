@@ -1,4 +1,3 @@
-import datetime
 import uuid
 from profile.api.v1.dependencies.auth import get_user_id
 from profile.api.v1.dependencies.services import create_profile_service
@@ -34,21 +33,14 @@ async def create_profile(
     return profile
 
 
-@router.get("", response_model=ProfileResponse)
-async def get_profiles(
+@router.get("/me", response_model=ProfileResponse)
+async def get_profile(
     user_id: uuid.UUID = Depends(get_user_id),
     service: ProfileService = Depends(create_profile_service),
-) -> ProfileResponse:
-    return ProfileResponse(
-        id=uuid.uuid4(),
-        user_id=user_id,
-        phone="+79999999999",
-        first_name="Вован",
-        middle_name="Иванович",
-        last_name="Побрякушкин",
-        created_at=datetime.datetime.now(),
-        updated_at=datetime.datetime.now(),
-    )
+) -> Profile:
+    profile = await service.get_by_user_id(user_id=user_id)
+
+    return profile
 
 
 @router.patch("/me", response_model=ProfileResponse)
@@ -56,17 +48,13 @@ async def update_profile(
     data: ProfileUpdate,
     user_id: uuid.UUID = Depends(get_user_id),
     service: ProfileService = Depends(create_profile_service),
-) -> ProfileResponse:
-    return ProfileResponse(
-        id=uuid.uuid4(),
+) -> Profile:
+    profile = await service.update_profile(
         user_id=user_id,
-        phone=data.phone or "",
-        first_name=data.first_name or "",
-        middle_name=data.middle_name or "",
-        last_name=data.last_name or "",
-        created_at=datetime.datetime.now(),
-        updated_at=datetime.datetime.now(),
+        data=data,
     )
+
+    return profile
 
 
 @router.delete(
@@ -77,4 +65,4 @@ async def delete_profile(
     user_id: uuid.UUID = Depends(get_user_id),
     service: ProfileService = Depends(create_profile_service),
 ) -> None:
-    return None
+    await service.delete_profile(user_id=user_id)

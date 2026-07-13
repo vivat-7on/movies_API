@@ -19,3 +19,8 @@ class PhoneAlreadyExistsError(DomainError):
 class InvalidPhoneNumberError(DomainError):
     status_code = 422
     default_message = "Invalid phone number"
+
+
+class ProfileNotFoundError(DomainError):
+    status_code = 404
+    default_message = "Profile not found"

@@ -1,7 +1,7 @@
 import datetime
 import uuid
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 class ProfileCreate(BaseModel):
@@ -29,3 +29,15 @@ class ProfileUpdate(BaseModel):
     first_name: str | None = None
     middle_name: str | None = None
     last_name: str | None = None
+
+    @model_validator(mode="after")
+    def validate_not_empty(self) -> "ProfileUpdate":
+        if not self.model_fields_set:
+            raise ValueError("At least one field is required")
+
+        required_fields = {"phone", "first_name", "last_name"}
+        for field in required_fields:
+            if getattr(self, field) is None:
+                raise ValueError(f"Field {field} is required")
+
+        return self

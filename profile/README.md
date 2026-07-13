@@ -421,5 +421,4 @@ ETL Service: PostgreSQL Movies → Elasticsearch
 
 Возможные ошибки:
 
-* `404 Not Found` - профиль не найден; 
 * `401 Unauthorized` — нет или невалиден JWT;
