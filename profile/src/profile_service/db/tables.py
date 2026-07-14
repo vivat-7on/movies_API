@@ -19,6 +19,17 @@ class BaseTable(DeclarativeBase):
 class ProfileTable(BaseTable):
     __tablename__ = "profiles"
 
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "user_id",
+            name="uq_profiles_user_id",
+        ),
+        sa.UniqueConstraint(
+            "phone",
+            name="uq_profiles_phone",
+        ),
+    )
+
     id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
         primary_key=True,
@@ -27,12 +38,10 @@ class ProfileTable(BaseTable):
     user_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(as_uuid=True),
         nullable=False,
-        unique=True,
     )
     phone: Mapped[str] = mapped_column(
         sa.String(16),
         nullable=False,
-        unique=True,
     )
     first_name: Mapped[str] = mapped_column(
         sa.String(100),

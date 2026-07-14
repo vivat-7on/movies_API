@@ -5,8 +5,17 @@ from unittest.mock import AsyncMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 from profile_service.api.v1.dependencies.auth import get_user_id
-from profile_service.api.v1.profiles import create_profile_service
+from profile_service.api.v1.dependencies.services import create_profile_service
+from profile_service.db.tables import BaseTable
 from profile_service.main import app
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.pool import NullPool
 
 
 @pytest.fixture
@@ -51,3 +60,51 @@ async def client_without_jwt(
             yield async_client
     finally:
         app.dependency_overrides.clear()
+
+
+TEST_DATABASE_URL = (
+    "postgresql+asyncpg://profile_test:profile_test@localhost:5433/profile_test"
+)
+
+
+@pytest.fixture
+async def integration_engine() -> AsyncGenerator[AsyncEngine, None]:
+    engine = create_async_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        poolclass=NullPool,
+    )
+    async with engine.begin() as connection:
+        await connection.execute(text("CREATE SCHEMA IF NOT EXISTS profile"))
+        await connection.run_sync(BaseTable.metadata.create_all)
+    try:
+        yield engine
+    finally:
+        async with engine.begin() as connection:
+            await connection.run_sync(BaseTable.metadata.drop_all)
+            await connection.execute(
+                text("DROP SCHEMA IF EXISTS profile CASCADE"),
+            )
+
+        await engine.dispose()
+
+
+@pytest.fixture
+async def integration_session(
+    integration_engine: AsyncEngine,
+) -> AsyncGenerator[AsyncSession, None]:
+    connection = await integration_engine.connect()
+    transaction = await connection.begin()
+
+    session_factory = async_sessionmaker(
+        bind=connection,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+    try:
+        async with session_factory() as session:
+            yield session
+    finally:
+        if transaction.is_active:
+            await transaction.rollback()
+        await connection.close()
