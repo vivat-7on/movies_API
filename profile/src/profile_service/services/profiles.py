@@ -2,16 +2,17 @@ import dataclasses
 import datetime
 import uuid
 from dataclasses import dataclass
-from profile.core.exceptions import (
+
+from profile_service.core.exceptions import (
     InvalidPhoneNumberError,
     PhoneAlreadyExistsError,
     ProfileAlreadyExistsError,
     ProfileNotFoundError,
 )
-from profile.core.utils import normalize_phone
-from profile.entities.profiles import Profile
-from profile.interfaces.profiles import IProfileRepo
-from profile.schemas.profiles import ProfileCreate, ProfileUpdate
+from profile_service.core.utils import normalize_phone
+from profile_service.entities.profiles import Profile
+from profile_service.interfaces.profiles import IProfileRepo
+from profile_service.schemas.profiles import ProfileCreate, ProfileUpdate
 
 
 @dataclass(frozen=True)

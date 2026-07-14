@@ -1,6 +1,7 @@
 import uuid
-from profile.entities.profiles import Profile
 from typing import Protocol
+
+from profile_service.entities.profiles import Profile
 
 
 class IProfileRepo(Protocol):

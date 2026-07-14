@@ -1,4 +1,3 @@
-from profile.db.settings import PostgresSettings
 from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -7,6 +6,8 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+
+from profile_service.db.settings import PostgresSettings
 
 
 def create_async_engine_from_settings(settings: PostgresSettings) -> AsyncEngine:

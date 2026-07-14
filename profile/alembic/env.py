@@ -1,8 +1,8 @@
 from logging.config import fileConfig
-from profile.db.settings import PostgresSettings
-from profile.db.tables import BaseTable
 
 from alembic import context
+from profile_service.db.settings import PostgresSettings
+from profile_service.db.tables import BaseTable
 from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides

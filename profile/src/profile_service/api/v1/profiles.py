@@ -1,16 +1,17 @@
 import uuid
-from profile.api.v1.dependencies.auth import get_user_id
-from profile.api.v1.dependencies.services import create_profile_service
-from profile.entities.profiles import Profile
-from profile.schemas.profiles import (
+
+from fastapi import APIRouter, Depends
+from starlette import status
+
+from profile_service.api.v1.dependencies.auth import get_user_id
+from profile_service.api.v1.dependencies.services import create_profile_service
+from profile_service.entities.profiles import Profile
+from profile_service.schemas.profiles import (
     ProfileCreate,
     ProfileResponse,
     ProfileUpdate,
 )
-from profile.services.profiles import ProfileService
-
-from fastapi import APIRouter, Depends
-from starlette import status
+from profile_service.services.profiles import ProfileService
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
 

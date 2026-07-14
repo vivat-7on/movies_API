@@ -1,15 +1,16 @@
-from profile.db.connection import (
-    create_async_engine_from_settings,
-    create_session_factory,
-    get_postgres_session,
-)
-from profile.db.settings import PostgresSettings
-from profile.repositories.profiles import ProfileRepo
-from profile.services.profiles import ProfileService
 from typing import AsyncGenerator
 
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from profile_service.db.connection import (
+    create_async_engine_from_settings,
+    create_session_factory,
+    get_postgres_session,
+)
+from profile_service.db.settings import PostgresSettings
+from profile_service.repositories.profiles import ProfileRepo
+from profile_service.services.profiles import ProfileService
 
 postgres_settings = PostgresSettings()
 async_engine = create_async_engine_from_settings(settings=postgres_settings)

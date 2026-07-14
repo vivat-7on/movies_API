@@ -38,6 +38,6 @@ class ProfileUpdate(BaseModel):
         non_nullable_fields = {"phone", "first_name", "last_name"}
         for field in non_nullable_fields & self.model_fields_set:
             if getattr(self, field) is None:
-                raise ValueError(f"Field {field} is required")
+                raise ValueError(f"Field {field} cannot be null")
 
         return self

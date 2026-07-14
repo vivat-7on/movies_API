@@ -1,16 +1,16 @@
 import datetime
 import uuid
-from profile.core.exceptions import (
+from unittest.mock import AsyncMock
+
+import pytest
+from profile_service.core.exceptions import (
     PhoneAlreadyExistsError,
     ProfileAlreadyExistsError,
     ProfileNotFoundError,
 )
-from profile.entities.profiles import Profile
-from profile.schemas.profiles import ProfileCreate, ProfileUpdate
-from profile.services.profiles import ProfileService
-from unittest.mock import AsyncMock
-
-import pytest
+from profile_service.entities.profiles import Profile
+from profile_service.schemas.profiles import ProfileCreate, ProfileUpdate
+from profile_service.services.profiles import ProfileService
 
 
 @pytest.mark.asyncio

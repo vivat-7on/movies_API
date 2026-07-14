@@ -1,7 +1,6 @@
-from profile.core.exceptions import InvalidPhoneNumberError
-from profile.core.utils import normalize_phone
-
 import pytest
+from profile_service.core.exceptions import InvalidPhoneNumberError
+from profile_service.core.utils import normalize_phone
 
 
 @pytest.mark.parametrize(

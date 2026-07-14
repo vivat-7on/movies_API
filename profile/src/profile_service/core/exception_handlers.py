@@ -1,7 +1,7 @@
-from profile.core.exceptions import DomainError
-
 from fastapi import FastAPI, Request
 from starlette.responses import JSONResponse
+
+from profile_service.core.exceptions import DomainError
 
 
 def setup_exception_handlers(app: FastAPI) -> None:

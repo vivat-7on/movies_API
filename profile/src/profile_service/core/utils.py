@@ -1,7 +1,7 @@
-from profile.core.exceptions import InvalidPhoneNumberError
-
 import phonenumbers
 from phonenumbers import NumberParseException, PhoneNumberFormat
+
+from profile_service.core.exceptions import InvalidPhoneNumberError
 
 
 def normalize_phone(phone: str, default_region: str = "RU") -> str:

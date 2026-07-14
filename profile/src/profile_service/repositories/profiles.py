@@ -1,16 +1,17 @@
 import uuid
-from profile.core.exceptions import (
-    PhoneAlreadyExistsError,
-    ProfileAlreadyExistsError,
-    ProfileNotFoundError,
-)
-from profile.db.tables import ProfileTable
-from profile.entities.profiles import Profile
-from profile.interfaces.profiles import IProfileRepo
 
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from profile_service.core.exceptions import (
+    PhoneAlreadyExistsError,
+    ProfileAlreadyExistsError,
+    ProfileNotFoundError,
+)
+from profile_service.db.tables import ProfileTable
+from profile_service.entities.profiles import Profile
+from profile_service.interfaces.profiles import IProfileRepo
 
 
 class ProfileRepo(IProfileRepo):
