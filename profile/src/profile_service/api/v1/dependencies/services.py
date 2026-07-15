@@ -3,18 +3,10 @@ from typing import AsyncGenerator
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from profile_service.db.connection import (
-    create_async_engine_from_settings,
-    create_session_factory,
-    get_postgres_session,
-)
-from profile_service.db.settings import PostgresSettings
+from profile_service.db.connection import get_postgres_session
+from profile_service.db.runtime import session_factory
 from profile_service.repositories.profiles import ProfileRepo
 from profile_service.services.profiles import ProfileService
-
-postgres_settings = PostgresSettings()
-async_engine = create_async_engine_from_settings(settings=postgres_settings)
-session_factory = create_session_factory(async_engine=async_engine)
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
