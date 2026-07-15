@@ -209,3 +209,4 @@ __marimo__/
 /.idea/*
 *.DS_Store
 */flake8-report/*
+/admin/.vevn/
