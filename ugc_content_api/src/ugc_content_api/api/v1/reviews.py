@@ -55,11 +55,15 @@ async def create_movie_review(
 )
 async def get_movie_review(
     movie_id: uuid.UUID,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     sort: ReviewSortOptions | None = Query(None),
     service: ReviewService = Depends(create_review_service),
 ) -> ListReviewResponse:
-    reviews = await service.get_reviews_by_movie_id(
+    reviews, total = await service.get_reviews_by_movie_id(
         movie_id=movie_id,
+        page=page,
+        page_size=page_size,
         sort=sort,
     )
 
@@ -76,6 +80,10 @@ async def get_movie_review(
             )
             for review in reviews
         ],
+        page=page,
+        page_size=page_size,
+        total=total,
+        pages=(total + page_size - 1) // page_size,
     )
 
 

@@ -22,6 +22,10 @@ class ReviewResponse(BaseModel):
 
 class ListReviewResponse(BaseModel):
     reviews: list[ReviewResponse]
+    page: int
+    page_size: int
+    total: int
+    pages: int
 
 
 class ReviewVoteRequest(BaseModel):

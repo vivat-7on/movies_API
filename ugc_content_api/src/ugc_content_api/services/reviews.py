@@ -44,10 +44,14 @@ class ReviewService:
     async def get_reviews_by_movie_id(
         self,
         movie_id: uuid.UUID,
+        page: int,
+        page_size: int,
         sort: ReviewSortOptions | None = None,
-    ) -> list[ReviewDetails]:
+    ) -> tuple[list[ReviewDetails], int]:
         return await self.review_repo.get_review_details_by_movie_id(
             movie_id=movie_id,
+            page=page,
+            page_size=page_size,
             sort=sort,
         )
 

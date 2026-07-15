@@ -1,10 +1,12 @@
 import datetime
+import uuid
 
 import pytest
 from ugc_content_api.entities.ratings import MovieRating, MovieRatingSummary
 from ugc_content_api.entities.reviews import (
     Review,
     ReviewDetails,
+    ReviewSortOptions,
     ReviewSummary,
     ReviewVote,
 )
@@ -85,8 +87,8 @@ def movie_rating_service(movie_rating_repo) -> MovieRatingService:
 class FakeReviewRepo:
     def __init__(self):
         self.reviews: list[Review] = []
-        self.deleted_reviews = []
-        self.updated_reviews = []
+        self.deleted_reviews: list[uuid.UUID] = []
+        self.updated_reviews: list[Review] = []
 
     async def get_review_by_id(self, review_id):
         review = [review for review in self.reviews if review.review_id == review_id]
@@ -96,19 +98,13 @@ class FakeReviewRepo:
 
         return review[0]
 
-    async def get_reviews_by_movie_id(self, movie_id, sort) -> list[Review]:
-        list_reviews = [
-            review for review in self.reviews if review.movie_id == movie_id
-        ]
-        return list_reviews
-
     async def create_review(self, review: Review) -> Review:
         self.reviews.append(review)
         return review
 
     async def update_review(self, review: Review) -> Review:
         self.updated_reviews.append(review)
-        return self.updated_reviews[0]
+        return review
 
     async def delete_review(self, review_id):
         self.deleted_reviews.append(review_id)
@@ -116,8 +112,36 @@ class FakeReviewRepo:
             review for review in self.reviews if review.review_id != review_id
         ]
 
-    async def get_review_details_by_movie_id(self, movie_id, sort):
-        return [
+    async def get_review_details_by_movie_id(
+        self,
+        movie_id: uuid.UUID,
+        page: int,
+        page_size: int,
+        sort: ReviewSortOptions | None = None,
+    ) -> tuple[list[ReviewDetails], int]:
+        matched_reviews = [
+            review for review in self.reviews if review.movie_id == movie_id
+        ]
+        total = len(matched_reviews)
+        if sort == ReviewSortOptions.created_at_asc:
+            matched_reviews.sort(
+                key=lambda review: (
+                    review.created_at,
+                    review.review_id,
+                ),
+            )
+        else:
+            matched_reviews.sort(
+                key=lambda review: (
+                    review.created_at,
+                    review.review_id,
+                ),
+                reverse=True,
+            )
+        start = (page - 1) * page_size
+        end = start + page_size
+        page_reviews = matched_reviews[start:end]
+        details = [
             ReviewDetails(
                 review_id=review.review_id,
                 user_id=review.user_id,
@@ -129,9 +153,9 @@ class FakeReviewRepo:
                 created_at=review.created_at,
                 updated_at=review.updated_at,
             )
-            for review in self.reviews
-            if review.movie_id == movie_id
+            for review in page_reviews
         ]
+        return details, total
 
 
 @pytest.fixture
