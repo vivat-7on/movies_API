@@ -7,7 +7,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from profile_service.api.v1.dependencies.auth import get_user_id
 from profile_service.api.v1.dependencies.services import create_profile_service
-from profile_service.core.config import AuthSettings
+from profile_service.core.config import AuthSettings, get_auth_settings
 from profile_service.db.tables import BaseTable
 from profile_service.main import app
 from sqlalchemy import text
@@ -45,6 +45,7 @@ async def client(
     auth_settings: AuthSettings,
 ) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_user_id] = lambda: user_id
+    app.dependency_overrides[get_auth_settings] = lambda: auth_settings
     app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
     try:
         transport = ASGITransport(app=app)
@@ -62,6 +63,7 @@ async def client_without_jwt(
     profile_service_mock: AsyncMock,
     auth_settings: AuthSettings,
 ) -> AsyncGenerator[AsyncClient, None]:
+    app.dependency_overrides[get_auth_settings] = lambda: auth_settings
     app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
     try:
         transport = ASGITransport(app=app)
