@@ -7,6 +7,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from profile_service.api.v1.dependencies.auth import get_user_id
 from profile_service.api.v1.dependencies.services import create_profile_service
+from profile_service.core.config import AuthSettings
 from profile_service.db.tables import BaseTable
 from profile_service.main import app
 from sqlalchemy import text
@@ -30,9 +31,18 @@ def profile_service_mock() -> AsyncMock:
 
 
 @pytest.fixture
+def auth_settings() -> AuthSettings:
+    return AuthSettings(
+        JWT_SECRET_KEY="test-secret-key",
+        JWT_ALGORITHM="HS256",
+    )
+
+
+@pytest.fixture
 async def client(
     user_id: uuid.UUID,
     profile_service_mock: AsyncMock,
+    auth_settings: AuthSettings,
 ) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[get_user_id] = lambda: user_id
     app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
@@ -50,6 +60,7 @@ async def client(
 @pytest.fixture
 async def client_without_jwt(
     profile_service_mock: AsyncMock,
+    auth_settings: AuthSettings,
 ) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
     try:
