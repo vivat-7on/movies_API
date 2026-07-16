@@ -1,3 +1,4 @@
+import os
 import uuid
 from typing import AsyncGenerator
 from unittest.mock import AsyncMock
@@ -62,8 +63,9 @@ async def client_without_jwt(
         app.dependency_overrides.clear()
 
 
-TEST_DATABASE_URL = (
-    "postgresql+asyncpg://profile_test:profile_test@localhost:5433/profile_test"
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://profile_test:profile_test@localhost:5433/profile_test",
 )
 
 

@@ -11,6 +11,8 @@ from profile_service.entities.profiles import Profile
 from profile_service.repositories.profiles import ProfileRepo
 from sqlalchemy.ext.asyncio import AsyncSession
 
+pytestmark = pytest.mark.integration
+
 
 def make_profile(
     *,
