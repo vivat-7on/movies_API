@@ -43,6 +43,7 @@ per-file-ignores =
         S101
     tests/*.py:
         WPS229,
+        WPS201
     src/notification/api/*.py:
         WPS404
     src/notification/api/v1/*.py:
