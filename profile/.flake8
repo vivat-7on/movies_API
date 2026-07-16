@@ -1,0 +1,50 @@
+[flake8]
+format = html
+htmldir = flake8-report
+max-line-length = 88
+
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    alembic,
+    */__init__.py
+
+ignore =
+    WPS404,
+    E704,
+    WPS210,
+    WPS407,
+    WPS476,
+    WPS305,
+    WPS306,
+    WPS110,
+    WPS115,
+    WPS432,
+    D100,
+    D101,
+    D102,
+    D103,
+    D104
+
+per-file-ignores =
+    tests/**/*.py:
+        WPS118,
+        WPS430,
+        WPS441,
+        WPS210,
+        WPS211,
+        WPS226,
+        WPS432,
+        WPS202,
+        WPS204,
+        WPS218,
+        W503
+        S101
+    tests/*.py:
+        WPS229,
+        WPS201
+    src/notification/api/*.py:
+        WPS404
+    src/notification/api/v1/*.py:
+        WPS404

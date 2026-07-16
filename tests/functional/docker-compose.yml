@@ -41,7 +41,7 @@ services:
 
   api:
     build:
-      context: ../../backend
+      context: ../../movie
     container_name: test_movies_api
     restart: always
     env_file:

@@ -37,8 +37,10 @@ class IReviewRepo(Protocol):
     async def get_review_details_by_movie_id(
         self,
         movie_id: uuid.UUID,
+        page: int,
+        page_size: int,
         sort: ReviewSortOptions | None = None,
-    ) -> list[ReviewDetails]: ...
+    ) -> tuple[list[ReviewDetails], int]: ...
 
 
 class IReviewVoteRepo(Protocol):

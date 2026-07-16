@@ -22,10 +22,10 @@ SORT_MAP = {
 }
 
 AGG_SORT_MAP = {
-    ReviewSortOptions.created_at_asc: {"created_at": 1},
-    ReviewSortOptions.created_at_desc: {"created_at": -1},
-    ReviewSortOptions.title_asc: {"title": 1},
-    ReviewSortOptions.title_desc: {"title": -1},
+    ReviewSortOptions.created_at_asc: {"created_at": 1, "review_id": 1},
+    ReviewSortOptions.created_at_desc: {"created_at": -1, "review_id": 1},
+    ReviewSortOptions.title_asc: {"title": 1, "review_id": 1},
+    ReviewSortOptions.title_desc: {"title": -1, "review_id": 1},
 }
 
 
@@ -100,53 +100,102 @@ class ReviewRepo(IReviewRepo):
     async def get_review_details_by_movie_id(
         self,
         movie_id: uuid.UUID,
+        page: int,
+        page_size: int,
         sort: ReviewSortOptions | None = None,
-    ) -> list[ReviewDetails]:
+    ) -> tuple[list[ReviewDetails], int]:
+        skip = (page - 1) * page_size
+
+        DEFAULT_SORT = {
+            "created_at": -1,
+            "review_id": 1,
+        }
+        if sort is None:
+            sort_stage = DEFAULT_SORT
+        else:
+            sort_stage = AGG_SORT_MAP[sort]
+
         pipeline: list[dict[str, Any]] = [
-            {"$match": {"movie_id": str(movie_id)}},
             {
-                "$lookup": {
-                    "from": "review_votes",
-                    "localField": "review_id",
-                    "foreignField": "review_id",
-                    "as": "votes",
+                "$match": {
+                    "movie_id": str(movie_id),
                 },
             },
             {
-                "$addFields": {
-                    "likes": {
-                        "$size": {
-                            "$filter": {
-                                "input": "$votes",
-                                "as": "vote",
-                                "cond": {"$eq": ["$$vote.score", 10]},
+                "$facet": {
+                    "items": [
+                        {
+                            "$sort": sort_stage,
+                        },
+                        {
+                            "$skip": skip,
+                        },
+                        {
+                            "$limit": page_size,
+                        },
+                        {
+                            "$lookup": {
+                                "from": "review_votes",
+                                "localField": "review_id",
+                                "foreignField": "review_id",
+                                "as": "votes",
                             },
                         },
-                    },
-                    "dislikes": {
-                        "$size": {
-                            "$filter": {
-                                "input": "$votes",
-                                "as": "vote",
-                                "cond": {"$eq": ["$$vote.score", 0]},
+                        {
+                            "$addFields": {
+                                "likes": {
+                                    "$size": {
+                                        "$filter": {
+                                            "input": "$votes",
+                                            "as": "vote",
+                                            "cond": {
+                                                "$eq": ["$$vote.score", 10],
+                                            },
+                                        },
+                                    },
+                                },
+                                "dislikes": {
+                                    "$size": {
+                                        "$filter": {
+                                            "input": "$votes",
+                                            "as": "vote",
+                                            "cond": {
+                                                "$eq": ["$$vote.score", 0],
+                                            },
+                                        },
+                                    },
+                                },
                             },
                         },
-                    },
+                        {
+                            "$project": {
+                                "votes": 0,
+                                "_id": 0,
+                            },
+                        },
+                    ],
+                    "metadata": [
+                        {
+                            "$count": "total",
+                        },
+                    ],
                 },
             },
-            {"$project": {"votes": 0, "_id": 0}},
         ]
 
-        if sort is not None:
-            pipeline.append({"$sort": AGG_SORT_MAP[sort]})
-
         cursor = await self.db.reviews.aggregate(pipeline)
-        docs = await cursor.to_list(length=None)
+        result = await cursor.to_list(length=1)
 
-        if not docs:
-            return []
+        if not result:
+            return [], 0
 
-        return [
+        facet_result = result[0]
+        docs = facet_result["items"]
+        metadata = facet_result["metadata"]
+
+        total = metadata[0]["total"] if metadata else 0
+
+        reviews = [
             ReviewDetails(
                 review_id=uuid.UUID(doc["review_id"]),
                 user_id=uuid.UUID(doc["user_id"]),
@@ -160,6 +209,7 @@ class ReviewRepo(IReviewRepo):
             )
             for doc in docs
         ]
+        return reviews, total
 
     @staticmethod
     def _map_review(document: dict) -> Review:

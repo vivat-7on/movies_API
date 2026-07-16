@@ -1,0 +1,16 @@
+import uuid
+from typing import Protocol
+
+from profile_service.entities.profiles import Profile
+
+
+class IProfileRepo(Protocol):
+    async def create_profile(self, profile: Profile) -> Profile: ...
+
+    async def get_by_user_id(self, user_id: uuid.UUID) -> Profile | None: ...
+
+    async def get_by_phone(self, phone: str) -> Profile | None: ...
+
+    async def update_profile(self, profile: Profile) -> Profile: ...
+
+    async def delete_profile(self, user_id: uuid.UUID) -> None: ...

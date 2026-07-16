@@ -76,9 +76,9 @@ services:
       retries: 5
     command: [ "redis-server" ]
 
-  api:
+  movie_api:
     build:
-      context: ./backend
+      context: ./movie
       dockerfile: Dockerfile
     container_name: movies_api
     restart: always
@@ -98,8 +98,6 @@ services:
     restart: always
     env_file:
       - ./auth/.env
-    ports:
-      - "8080:8000" # TODO
     depends_on:
       db:
         condition: service_healthy
@@ -117,11 +115,12 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - api
+      - movie_api
       - auth
       - admin
       - ugc_api
       - ugc_content_api
+      - profile_api
 
   admin:
     build:
@@ -325,6 +324,39 @@ services:
       auth:
         condition: service_started
 
+  migration_profile_service:
+    build:
+      context: ./profile
+      dockerfile: Dockerfile
+    env_file:
+      - ./profile/.env
+    container_name: migration-profile
+    command: alembic upgrade head
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  profile_api:
+    build:
+      context: ./profile
+      dockerfile: Dockerfile
+    container_name: profile-api
+    restart: always
+    env_file:
+      - ./profile/.env
+    depends_on:
+      migration_profile_service:
+        condition: service_completed_successfully
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/profile/health')\"",
+      ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   movies-postgres-data:

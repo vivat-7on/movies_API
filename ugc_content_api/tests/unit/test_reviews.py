@@ -43,13 +43,22 @@ async def test_get_review_details(review_service, review_repo, vote_repo):
 async def test_get_reviews_by_movie_id(review_service, review_repo):
     await review_repo.create_review(REVIEW)
 
-    reviews = await review_service.get_reviews_by_movie_id(MOVIE_ID)
+    reviews, total = await review_service.get_reviews_by_movie_id(
+        movie_id=MOVIE_ID,
+        page=1,
+        page_size=20,
+    )
 
-    assert reviews[0].review_id == REVIEW_ID
-    assert reviews[0].user_id == USER_ID
-    assert reviews[0].movie_id == MOVIE_ID
-    assert reviews[0].title == TITLE
-    assert reviews[0].text == TEXT
+    assert total == 1
+    assert len(reviews) == 1
+
+    review = reviews[0]
+
+    assert review.review_id == REVIEW_ID
+    assert review.user_id == USER_ID
+    assert review.movie_id == MOVIE_ID
+    assert review.title == TITLE
+    assert review.text == TEXT
 
 
 @pytest.mark.asyncio

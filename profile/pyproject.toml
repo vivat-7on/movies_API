@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = ["integration: tests required external storage"]
+
+[tool.mypy]
+mypy_path = "src"
