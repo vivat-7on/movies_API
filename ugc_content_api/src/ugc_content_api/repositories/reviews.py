@@ -105,10 +105,15 @@ class ReviewRepo(IReviewRepo):
         sort: ReviewSortOptions | None = None,
     ) -> tuple[list[ReviewDetails], int]:
         skip = (page - 1) * page_size
-        sort_stage = AGG_SORT_MAP.get(
-            sort,
-            {"created_at": -1, "review_id": 1},
-        )
+
+        DEFAULT_SORT = {
+            "created_at": -1,
+            "review_id": 1,
+        }
+        if sort is None:
+            sort_stage = DEFAULT_SORT
+        else:
+            sort_stage = AGG_SORT_MAP[sort]
 
         pipeline: list[dict[str, Any]] = [
             {
