@@ -1,20 +1,62 @@
-# Online Cinema Microservices Platform
+# Онлайн кинотеатр
 
 Backend-платформа онлайн-кинотеатра, построенная на микросервисной архитектуре.
 
 Система включает:
 
-- ETL сервис загрузки данных в Elasticsearch
+- ETL-сервис загрузки данных в Elasticsearch
 - UGC pipeline: Kafka → ETL → ClickHouse
 - UGC Content API (MongoDB)
 - FastAPI API для контента
 - Auth-сервис с JWT/OAuth2
+- Profile-сервис
 - Redis caching и rate limiting
 - Notification-сервис для асинхронной отправки email-уведомлений
-- Nginx gateway
+- Nginx Gateway
 - observability through OpenTelemetry and Jaeger
 
 ---
+## Возможности
+
+- поиск и просмотр фильмов, жанров и персоналий;
+- JWT-аутентификация и OAuth2 через Yandex;
+- профили пользователей;
+- оценки, рецензии и закладки;
+- сбор пользовательских событий;
+- асинхронные email-уведомления;
+- административная панель;
+- распределённая трассировка;
+- кэширование и rate limiting.
+
+---
+## Сервисы
+
+| Сервис          | Назначение                               |
+|-----------------|------------------------------------------|
+| Movies API      | API фильмов, жанров и персоналий         |
+| Auth Service    | Аутентификация и авторизация              |
+| Profile Service | Управление профилями пользователей        |
+| UGC API         | Сбор пользовательских событий             |
+| UGC Content API | Оценки, рецензии и закладки               |
+| Notification    | Асинхронная отправка уведомлений          |
+| ETL             | Перенос данных PostgreSQL → Elasticsearch |
+| UGC ETL         | Перенос событий Kafka → ClickHouse        |
+| Django Admin    | Административная панель                   |
+```
+                        Nginx Gateway
+                              │
+      ┌───────────────┬───────────────┬──────────────┐
+      ▼               ▼               ▼              ▼
+  Movies API      Auth API      Profile API    UGC Content
+      │               │               │              │
+      ▼               ▼               ▼              ▼
+Elasticsearch     PostgreSQL      PostgreSQL      MongoDB
+
+UGC API → Kafka → UGC ETL → ClickHouse
+
+Notification API → PostgreSQL → RabbitMQ → Worker → SMTP
+
+```
 
 ## Архитектура
 
@@ -47,8 +89,10 @@ Backend-платформа онлайн-кинотеатра, построенн
 4. **Админ панель (Django Admin)**
     - Предоставляет интерфейс для управления данными фильмов, жанров и
       персоналий
-    - Работает поверх существующей базы PostgreSQL (content schema)
-    - Не управляет схемой базы данных (managed = False)
+    - Предоставляет доступ к просмотру профилей пользователей
+    - Использует общую базу PostgreSQL
+    - Управляет собственными служебными таблицами Django
+    - Модели контента и профилей подключены как внешние модели с `managed = False`
     - Использует встроенный Django Admin
     - Статические файлы собираются в volume и отдаются через Nginx
 
@@ -56,29 +100,30 @@ Backend-платформа онлайн-кинотеатра, построенн
     - Принимает пользовательские события
     - Публикует пользовательские события в Kafka
 
-6.  **UGC ETL**
+6. **UGC ETL**
 
-- Читает события пользовательской активности из Kafka
-- Обрабатывает события batch'ами
-- Загружает данные в ClickHouse
-- Коммитит Kafka offset только после успешной вставки
+    - Читает события пользовательской активности из Kafka
+    - Обрабатывает события batch'ами
+    - Загружает данные в ClickHouse
+    - Коммитит Kafka offset только после успешной вставки
 
-7.  **UGC content API**
+7. **UGC Content API**
 
-- Принимает оценки, рецензии и закладки
-- Сохраняет всё в MongoDB
-- Позволяет получать информацию по оценкам, рецензиям и закладкам
+    - Принимает оценки, рецензии и закладки
+    - Сохраняет всё в MongoDB
+    - Позволяет получать информацию по оценкам, рецензиям и закладкам
 
 8. **Notification**
+
 Состоит из двух компонентов.
 
- ### Notification API 
+### Notification API
 
 - Принимает события от других сервисов
 - Создаёт уведомление в PostgreSQL
 - Публикует `notification_id` в RabbitMQ
 
- ### Worker 
+### Worker
 
 - Читает `notification_id` из RabbitMQ
 - Получает уведомление из PostgreSQL
@@ -87,9 +132,21 @@ Backend-платформа онлайн-кинотеатра, построенн
 - Отправляет письмо пользователю
 - Обновляет статус уведомления
 
+9. **Profile API**
+
+      - создание профиля
+      - просмотр собственного профиля
+      - изменение профиля
+      - удаление профиля
+      - валидация и нормализация номера телефона
+      - JWT авторизация
+      - интеграция с Django Admin
+
+         Подробнее см.: `profile/README.md`
+
 ---
 
-## Architecture diagrams
+## Архитектурные схемы
 
 - [AS IS](docs/architecture/as_is.png)
 - [TO BE](docs/architecture/to_be.png)
@@ -98,7 +155,7 @@ Backend-платформа онлайн-кинотеатра, построенн
 
 Auth-сервис поддерживает вход через Yandex OAuth2.
 
-Flow:
+Сценарий:
 
 1. Пользователь переходит на `/api/v1/auth/yandex/login`
 2. Происходит redirect на Yandex OAuth
@@ -127,7 +184,7 @@ Flow:
 POST /api/v1/events
 ```
 
-`Authorization` header optional:
+Заголовок `Authorization` не обязателен:
 
 - if JWT token is provided → `user_id` extracted from token
 - if JWT token is absent → `anonymous_id` must be provided
@@ -176,7 +233,7 @@ curl -X POST http://127.0.0.1/api/v1/events \
 
 #### Проверка сообщений в Kafka:
 
-```commandline
+```bash
 docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
   --topic events \
@@ -187,13 +244,13 @@ docker exec -it kafka /opt/kafka/bin/kafka-console-consumer.sh \
 
 #### Проверка данных в ClickHouse
 
-```commandline
+```bash
 curl "http://localhost:8123" \
   --user default:password \
   -d "SELECT * FROM movies.events"
 ```
 
-## UGC content API
+## UGC Content API
 
 Сервис хранения пользовательского контента.
 
@@ -203,6 +260,8 @@ curl "http://localhost:8123" \
 - рецензии;
 - лайки/дизлайки рецензий;
 - закладки.
+
+### Техническая реализация
 
 - FastAPI сервис
 - MongoDB как основное хранилище
@@ -229,6 +288,43 @@ curl "http://localhost:8123" \
 - появляется ещё один сервис в инфраструктуре;
 - усложняется локальный запуск;
 - требуется отдельная настройка мониторинга, логирования и CI/CD.
+
+### Эндпоинты
+
+```
+Базовый префикс API:
+
+/api/v1/ugc-content
+
+Bookmarks
+
+PUT    /movies/{id}/bookmarks/me
+DELETE /movies/{id}/bookmarks/me
+GET    /bookmarks/me
+
+Ratings
+
+PUT    /movies/{id}/ratings/me
+DELETE /movies/{id}/ratings/me
+GET    /movies/{id}/ratings/me
+GET    /movies/{id}/ratings/summary
+
+Reviews
+
+POST   /movies/{id}/reviews
+PUT    /reviews/{id}
+DELETE /reviews/{id}
+GET    /reviews/{id}
+GET    /movies/{id}/reviews
+
+```
+
+Повторное добавление закладки идемпотентно и не создаёт дубликат.
+Список рецензий фильма поддерживает:
+
+- пагинацию через `page` и `page_size`;
+- сортировку;
+- метаданные `total` и `pages`.
 
 ## Notification Service
 
@@ -268,13 +364,15 @@ Notification проходит следующие статусы:
 
 ### Внутренняя авторизация
 
-Notification API предназначен для межсервисного взаимодействия и закрыт service-to-service токеном.
+Notification API предназначен для межсервисного взаимодействия и закрыт
+service-to-service токеном.
 
 Все запросы к эндпоинтам сервиса должны содержать заголовок:
 
 ```http
 X-Service-Token: <service-token>
 ```
+
 Токен задаётся через переменную окружения:
 
 `NOTIFICATION_SERVICE_TOKEN=your-secret-token`
@@ -282,20 +380,33 @@ X-Service-Token: <service-token>
 Если заголовок отсутствует, сервис вернёт 401 Unauthorized.
 Если токен неверный, сервис вернёт 403 Forbidden.
 
-## Graceful degradation
+---
+## Profile service
+
+### Эндпоинты
+
+```
+POST   /api/v1/profiles
+GET    /api/v1/profiles/me
+PATCH  /api/v1/profiles/me
+DELETE /api/v1/profiles/me
+```
+Номер телефона нормализуется в формат E.164.
+
+## Отказоустойчивость
 
 Административная панель не хранит локальные пароли пользователей.
 Авторизация происходит через Auth API.
 
 При недоступности Auth-сервиса:
 
-- Movies API продолжает работать
-- Admin panel остаётся доступной
-- новые логины становятся невозможны
+- Movies API продолжает работать;
+- уже аутентифицированные администраторы могут продолжить работу до истечения Django-сессии;
+- новые входы в административную панель становятся невозможны.
 
 ---
 
-## Rate limiting
+## Ограничение запросов
 
 Проект использует двухуровневое ограничение запросов.
 
@@ -322,14 +433,14 @@ Redis:
 
 ---
 
-## Observability
+## Наблюдаемость
 
 Используется OpenTelemetry + Jaeger.
 
 Для каждого запроса:
 
 - генерируется `X-Request-Id`
-- request id прокидывается через Nginx
+- request ID прокидывается через Nginx
 - трейсы отправляются в Jaeger через OTLP gRPC
 
 ---
@@ -360,39 +471,25 @@ Pipeline автоматически выполняет:
 - проверку на Python 3.10, 3.11 и 3.12
 - отправку результата в Telegram
 
-
 ## Используемые технологии
 
-- **Python 3.11**
-- **FastAPI**
-- **Alembic**
-- **Jinja2**
-- **SqlAlchemy**
-- **aip-pika**
-- **Elasticsearch 8.x**
-- **Redis**
-- **PostgreSQL**
-- **Docker / Docker Compose**
-- **AsyncElasticsearch**
-- **Pydantic v2**
-- **JWT (python-jose)**
-- **SQLAlchemy (async)**
-- **pytest**
-- **Django Admin**
-- **Kafka**
-- **ClickHouse**
-- **Flask**
-- **MongoDB**
-- **RabbitMQ**
+**Backend:** Python 3.11, FastAPI, Flask, Django Admin, Pydantic v2  
+**Databases:** PostgreSQL, MongoDB, ClickHouse, Elasticsearch  
+**Messaging:** Kafka, RabbitMQ  
+**Infrastructure:** Docker Compose, Nginx, Redis  
+**Observability:** OpenTelemetry, Jaeger  
+**Testing and quality:** pytest, mypy, Ruff, flake8  
+**Security:** JWT, OAuth2, bcrypt
 
 ---
 
 ## Запуск
 
-```commandline
+```bash
 docker compose up --build
 ```
-
+Перед запуском необходимо создать `.env`-файлы сервисов на основе соответствующих `.env.example`.
+При запуске Docker Compose Alembic-миграции Profile Service и Notification Service применяются автоматически до старта API.
 После запуска автоматически поднимаются:
 
 - PostgreSQL
@@ -409,7 +506,17 @@ docker compose up --build
 - Django Admin
 - Nginx Gateway
 - RabbitMQ
+
 ---
+
+## Сквозной пользовательский сценарий
+
+1. Пользователь проходит аутентификацию и получает JWT.
+2. Создаёт и обновляет профиль.
+3. Добавляет фильм в закладки.
+4. Ставит фильму оценку.
+5. Создаёт рецензию.
+6. Администратор видит профиль пользователя в Django Admin.
 
 ## Доступные сервисы
 
@@ -418,5 +525,6 @@ docker compose up --build
 - Django Admin: http://localhost/admin
 - Jaeger UI: http://localhost:16686
 - UGC content API docs: http://localhost/ugc-content/docs
+- Profile API docs: http://localhost/profiles/docs
 
 ---
