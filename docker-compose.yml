@@ -345,8 +345,6 @@ services:
     restart: always
     env_file:
       - ./profile/.env
-    ports:
-      - "8001:8000" #TODO
     depends_on:
       migration_profile_service:
         condition: service_completed_successfully

@@ -14,6 +14,33 @@ from profile_service.entities.profiles import Profile
 from profile_service.interfaces.profiles import IProfileRepo
 
 
+def _to_entity(table: ProfileTable) -> Profile:
+    return Profile(
+        id=table.id,
+        user_id=table.user_id,
+        phone=table.phone,
+        first_name=table.first_name,
+        middle_name=table.middle_name,
+        last_name=table.last_name,
+        created_at=table.created_at,
+        updated_at=table.updated_at,
+    )
+
+
+def _get_constraint_name(exc: IntegrityError) -> str | None:
+    current: BaseException | None = exc.orig
+
+    while current is not None:
+        constraint_name = getattr(current, "constraint_name", None)
+
+        if constraint_name is not None:
+            return constraint_name
+
+        current = current.__cause__
+
+    return None
+
+
 class ProfileRepo(IProfileRepo):
     def __init__(self, session: AsyncSession):
         self.session = session
@@ -34,7 +61,7 @@ class ProfileRepo(IProfileRepo):
         try:
             await self.session.flush()
         except IntegrityError as exc:
-            constraint_name = self._get_constraint_name(exc)
+            constraint_name = _get_constraint_name(exc)
 
             if constraint_name == "uq_profiles_phone":
                 raise PhoneAlreadyExistsError() from exc
@@ -44,7 +71,7 @@ class ProfileRepo(IProfileRepo):
 
             raise
 
-        return self._to_entity(table=profile_table)
+        return _to_entity(table=profile_table)
 
     async def get_by_user_id(self, user_id: uuid.UUID) -> Profile | None:
         stmt = select(ProfileTable).where(ProfileTable.user_id == user_id)
@@ -55,7 +82,7 @@ class ProfileRepo(IProfileRepo):
         if profile_table is None:
             return None
 
-        return self._to_entity(table=profile_table)
+        return _to_entity(table=profile_table)
 
     async def get_by_phone(self, phone: str) -> Profile | None:
         stmt = select(ProfileTable).where(ProfileTable.phone == phone)
@@ -63,7 +90,7 @@ class ProfileRepo(IProfileRepo):
         profile_table = result.scalar_one_or_none()
         if profile_table is None:
             return None
-        return self._to_entity(table=profile_table)
+        return _to_entity(table=profile_table)
 
     async def update_profile(self, profile: Profile) -> Profile:
         stmt = select(ProfileTable).where(
@@ -84,7 +111,7 @@ class ProfileRepo(IProfileRepo):
         try:
             await self.session.flush()
         except IntegrityError as exc:
-            constraint_name = self._get_constraint_name(exc)
+            constraint_name = _get_constraint_name(exc)
             if constraint_name == "uq_profiles_phone":
                 raise PhoneAlreadyExistsError() from exc
 
@@ -92,36 +119,9 @@ class ProfileRepo(IProfileRepo):
 
         await self.session.refresh(profile_table)
 
-        return self._to_entity(table=profile_table)
+        return _to_entity(table=profile_table)
 
     async def delete_profile(self, user_id: uuid.UUID) -> None:
         stmt = delete(ProfileTable).where(ProfileTable.user_id == user_id)
         await self.session.execute(stmt)
         await self.session.flush()
-
-    @staticmethod
-    def _to_entity(table: ProfileTable) -> Profile:
-        return Profile(
-            id=table.id,
-            user_id=table.user_id,
-            phone=table.phone,
-            first_name=table.first_name,
-            middle_name=table.middle_name,
-            last_name=table.last_name,
-            created_at=table.created_at,
-            updated_at=table.updated_at,
-        )
-
-    @staticmethod
-    def _get_constraint_name(exc: IntegrityError) -> str | None:
-        current: BaseException | None = exc.orig
-
-        while current is not None:
-            constraint_name = getattr(current, "constraint_name", None)
-
-            if constraint_name is not None:
-                return constraint_name
-
-            current = current.__cause__
-
-        return None

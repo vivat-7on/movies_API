@@ -11,6 +11,7 @@ exclude =
     */__init__.py
 
 ignore =
+    WPS404,
     E704,
     WPS210,
     WPS407,
@@ -27,7 +28,7 @@ ignore =
     D104
 
 per-file-ignores =
-    tests/*.py:
+    tests/**/*.py:
         WPS118,
         WPS430,
         WPS441,
@@ -35,7 +36,13 @@ per-file-ignores =
         WPS211,
         WPS226,
         WPS432,
+        WPS202,
+        WPS204,
+        WPS218,
+        W503
         S101
+    tests/*.py:
+        WPS229,
     src/notification/api/*.py:
         WPS404
     src/notification/api/v1/*.py:

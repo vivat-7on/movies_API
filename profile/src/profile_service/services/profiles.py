@@ -1,15 +1,14 @@
-import dataclasses
 import datetime
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from typing import Any
 
 from profile_service.core.exceptions import (
-    InvalidPhoneNumberError,
     PhoneAlreadyExistsError,
     ProfileAlreadyExistsError,
     ProfileNotFoundError,
 )
-from profile_service.core.utils import normalize_phone
+from profile_service.core.phone import normalize_phone
 from profile_service.entities.profiles import Profile
 from profile_service.interfaces.profiles import IProfileRepo
 from profile_service.schemas.profiles import ProfileCreate, ProfileUpdate
@@ -73,33 +72,38 @@ class ProfileService:
             raise ProfileNotFoundError()
 
         changes = data.model_dump(exclude_unset=True)
-
-        if "phone" in changes:
-            phone = changes["phone"]
-
-            if phone is None:
-                raise InvalidPhoneNumberError()
-
-            normalized_phone = normalize_phone(phone=phone)
-
-            if normalized_phone != profile.phone:
-                profile_with_phone = await self.repo.get_by_phone(
-                    phone=normalized_phone,
-                )
-
-                if profile_with_phone is not None:
-                    raise PhoneAlreadyExistsError()
-
-            changes["phone"] = normalized_phone
-        now = datetime.datetime.now(datetime.UTC)
-
-        updated_profile = dataclasses.replace(
+        await self._prepare_phone_change(
+            changes=changes,
+            current_profile=profile,
+        )
+        updated_profile = replace(
             profile,
             **changes,
-            updated_at=now,
+            updated_at=datetime.datetime.now(datetime.UTC),
         )
 
         return await self.repo.update_profile(profile=updated_profile)
 
     async def delete_profile(self, user_id: uuid.UUID) -> None:
         await self.repo.delete_profile(user_id=user_id)
+
+    async def _prepare_phone_change(
+        self,
+        changes: dict[str, Any],
+        current_profile: Profile,
+    ) -> None:
+        phone = changes.get("phone")
+
+        if phone is None:
+            return
+
+        normalized_phone = normalize_phone(phone=phone)
+        changes["phone"] = normalized_phone
+
+        if normalized_phone == current_profile.phone:
+            return
+
+        existing_profile = await self.repo.get_by_phone(phone=normalized_phone)
+
+        if existing_profile is not None:
+            raise PhoneAlreadyExistsError()
