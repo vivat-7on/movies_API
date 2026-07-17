@@ -16,6 +16,20 @@ class AuthSettings(BaseSettings):
     )
 
 
+class AppSettings(BaseSettings):
+    DEBUG: bool = False
+
+    model_config = SettingsConfigDict(
+        env_file=BASE_DIR / ".env",
+        extra="ignore",
+    )
+
+
+@lru_cache
+def get_app_settings() -> AppSettings:
+    return AppSettings()
+
+
 @lru_cache
 def get_auth_settings() -> AuthSettings:
     return AuthSettings()  # type: ignore[call-arg]
