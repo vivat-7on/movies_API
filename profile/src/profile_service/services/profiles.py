@@ -10,6 +10,15 @@ from profile_service.interfaces.profiles import IProfileRepo
 from profile_service.schemas.profiles import ProfileCreate, ProfileUpdate
 
 
+def _normalize_phone_change(changes: dict[str, Any]) -> None:
+    phone = changes.get("phone")
+
+    if phone is None:
+        return
+
+    changes["phone"] = normalize_phone(phone=phone)
+
+
 @dataclass(frozen=True)
 class ProfileService:
     repo: IProfileRepo
@@ -52,7 +61,7 @@ class ProfileService:
             raise ProfileNotFoundError()
 
         changes = data.model_dump(exclude_unset=True)
-        self._normalize_phone_change(changes=changes)
+        _normalize_phone_change(changes=changes)
 
         updated_profile = replace(
             profile,
@@ -64,12 +73,3 @@ class ProfileService:
 
     async def delete_profile(self, user_id: uuid.UUID) -> None:
         await self.repo.delete_profile(user_id=user_id)
-
-    @staticmethod
-    def _normalize_phone_change(changes: dict[str, Any]) -> None:
-        phone = changes.get("phone")
-
-        if phone is None:
-            return
-
-        changes["phone"] = normalize_phone(phone=phone)

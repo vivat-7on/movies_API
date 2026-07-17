@@ -21,6 +21,8 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool
 
+TEST_BASE_URL = "http://test"
+
 
 @pytest.fixture
 def user_id() -> uuid.UUID:
@@ -45,7 +47,7 @@ async def client(
         transport = ASGITransport(app=app)
         async with AsyncClient(
             transport=transport,
-            base_url="http://test",
+            base_url=TEST_BASE_URL,
         ) as async_client:
             yield async_client
     finally:
