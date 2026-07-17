@@ -16,8 +16,6 @@ from profile_service.services.profiles import ProfileService
 @pytest.mark.asyncio
 async def test_create_profile() -> None:
     repo = AsyncMock()
-    repo.get_by_user_id.return_value = None
-    repo.get_by_phone.return_value = None
     repo.create_profile.side_effect = lambda profile: profile
 
     service = ProfileService(repo=repo)
@@ -38,22 +36,19 @@ async def test_create_profile() -> None:
     assert result.user_id == user_id
     assert result.phone == "+79997776655"
 
-    repo.get_by_user_id.assert_awaited_once_with(user_id=user_id)
-    repo.get_by_phone.assert_awaited_once_with(phone="+79997776655")
     repo.create_profile.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_create_profile_when_profile_exists() -> None:
     repo = AsyncMock()
-    repo.get_by_user_id.return_value = object()
-    user_id = uuid.uuid4()
+    repo.create_profile.side_effect = ProfileAlreadyExistsError()
 
     service = ProfileService(repo=repo)
 
     with pytest.raises(ProfileAlreadyExistsError):
         await service.create_profile(
-            user_id=user_id,
+            user_id=uuid.uuid4(),
             data=ProfileCreate(
                 phone="8 999 777 66 55",
                 first_name="John",
@@ -62,16 +57,13 @@ async def test_create_profile_when_profile_exists() -> None:
             ),
         )
 
-    repo.get_by_user_id.assert_awaited_once_with(user_id=user_id)
-    repo.get_by_phone.assert_not_awaited()
-    repo.create_profile.assert_not_awaited()
+    repo.create_profile.assert_awaited_once()
 
 
 @pytest.mark.asyncio
 async def test_create_profile_when_phone_exists() -> None:
     repo = AsyncMock()
-    repo.get_by_user_id.return_value = None
-    repo.get_by_phone.return_value = object()
+    repo.create_profile.side_effect = PhoneAlreadyExistsError()
 
     service = ProfileService(repo=repo)
 
@@ -86,10 +78,7 @@ async def test_create_profile_when_phone_exists() -> None:
             ),
         )
 
-    repo.get_by_phone.assert_awaited_once_with(
-        phone="+79997776655",
-    )
-    repo.create_profile.assert_not_awaited()
+    repo.create_profile.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -149,7 +138,6 @@ async def test_update_profile() -> None:
         updated_at=now,
     )
     repo.get_by_user_id.return_value = existing_profile
-    repo.get_by_phone.return_value = None
     repo.update_profile.side_effect = lambda profile: profile
 
     service = ProfileService(repo=repo)
@@ -173,7 +161,6 @@ async def test_update_profile() -> None:
     assert result.created_at == existing_profile.created_at
     assert result.updated_at >= existing_profile.updated_at
     repo.get_by_user_id.assert_awaited_once_with(user_id=user_id)
-    repo.get_by_phone.assert_not_awaited()
     repo.update_profile.assert_awaited_once_with(profile=result)
 
 
@@ -195,7 +182,6 @@ async def test_update_profile_with_new_phone() -> None:
     )
 
     repo.get_by_user_id.return_value = existing_profile
-    repo.get_by_phone.return_value = None
     repo.update_profile.side_effect = lambda profile: profile
 
     service = ProfileService(repo=repo)
@@ -215,9 +201,6 @@ async def test_update_profile_with_new_phone() -> None:
     assert result.middle_name == existing_profile.middle_name
     assert result.last_name == existing_profile.last_name
 
-    repo.get_by_phone.assert_awaited_once_with(
-        phone="+79991112233",
-    )
     repo.update_profile.assert_awaited_once_with(profile=result)
 
 
@@ -236,7 +219,6 @@ async def test_update_profile_when_profile_not_found() -> None:
         )
 
     repo.get_by_user_id.assert_awaited_once_with(user_id=user_id)
-    repo.get_by_phone.assert_not_awaited()
     repo.update_profile.assert_not_awaited()
 
 
@@ -258,7 +240,7 @@ async def test_update_profile_when_new_phone_exists() -> None:
     )
 
     repo.get_by_user_id.return_value = existing_profile
-    repo.get_by_phone.return_value = object()
+    repo.update_profile.side_effect = PhoneAlreadyExistsError()
 
     service = ProfileService(repo=repo)
 
@@ -268,10 +250,8 @@ async def test_update_profile_when_new_phone_exists() -> None:
             data=ProfileUpdate(phone="8 999 111-22-33"),
         )
 
-    repo.get_by_phone.assert_awaited_once_with(
-        phone="+79991112233",
-    )
-    repo.update_profile.assert_not_awaited()
+    repo.update_profile.assert_awaited_once()
+    repo.get_by_user_id.assert_awaited_once_with(user_id=user_id)
 
 
 @pytest.mark.asyncio

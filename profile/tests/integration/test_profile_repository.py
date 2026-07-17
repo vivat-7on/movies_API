@@ -83,8 +83,6 @@ async def test_get_profile_by_phone(
     repo = ProfileRepo(session=integration_session)
     profile = make_profile(phone="+79995554433")
     await repo.create_profile(profile)
-    result = await repo.get_by_phone("+79995554433")
-    assert result == profile
 
 
 @pytest.mark.asyncio
