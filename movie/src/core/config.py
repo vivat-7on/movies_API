@@ -18,8 +18,5 @@ ELASTIC_PORT = int(os.getenv("ES_PORT", 9200))
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-JWT_SECRET_KEY = os.getenv(
-    "JWT_SECRET_KEY",
-    "gV64m9aIzFG4qpgVphvQbPQrtAO0nM-7YwwOvu0XPt5KJOjAy4AfgLkqJXYEt",
-)
-JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+JWT_PUBLIC_KEY_PATH = ("JWT_PUBLIC_KEY_PATH", "/run/secrets/jwt/public.pem")
+JWT_ALGORITHM = ("JWT_ALGORITHM", "RS256")
