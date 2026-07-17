@@ -1,3 +1,6 @@
+from functools import lru_cache
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -34,13 +37,27 @@ class DBSettings(BaseConfig):
 
 
 class AuthSettings(BaseConfig):
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str = "HS256"
+    JWT_PRIVATE_KEY_PATH: Path
+    JWT_PUBLIC_KEY_PATH: Path
+    JWT_ALGORITHM: str = "RS256"
     ACCESS_TOKEN_TTL_MINUTES: int = 10
     REFRESH_TOKEN_TTL_DAYS: int = 7
     DEFAULT_ROLE_NAME: str = "user"
     DEBUG: bool = True
     AUTH_SERVICE_TOKEN: str = "your-service-token"
+
+    @property
+    def jwt_private_key_path(self) -> str:
+        return self.JWT_PRIVATE_KEY_PATH.read_text(encoding="utf-8")
+
+    @property
+    def jwt_public_key_path(self) -> str:
+        return self.JWT_PUBLIC_KEY_PATH.read_text(encoding="utf-8")
+
+
+@lru_cache
+def get_auth_settings() -> AuthSettings:
+    return AuthSettings()
 
 
 class YandexOAuthSettings(BaseConfig):

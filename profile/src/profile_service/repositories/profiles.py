@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -84,40 +84,32 @@ class ProfileRepo(IProfileRepo):
 
         return _to_entity(table=profile_table)
 
-    async def get_by_phone(self, phone: str) -> Profile | None:
-        stmt = select(ProfileTable).where(ProfileTable.phone == phone)
-        result = await self.session.execute(stmt)
-        profile_table = result.scalar_one_or_none()
-        if profile_table is None:
-            return None
-        return _to_entity(table=profile_table)
-
     async def update_profile(self, profile: Profile) -> Profile:
-        stmt = select(ProfileTable).where(
-            ProfileTable.user_id == profile.user_id,
+        stmt = (
+            update(ProfileTable)
+            .where(ProfileTable.user_id == profile.user_id)
+            .values(
+                phone=profile.phone,
+                first_name=profile.first_name,
+                middle_name=profile.middle_name,
+                last_name=profile.last_name,
+                updated_at=profile.updated_at,
+            )
+            .returning(ProfileTable)
         )
-        result = await self.session.execute(stmt)
+        try:
+            result = await self.session.execute(stmt)
+        except IntegrityError as exc:
+            constraint_name = _get_constraint_name(exc)
+
+            if constraint_name == "uq_profiles_phone":
+                raise PhoneAlreadyExistsError() from exc
+            raise
+
         profile_table = result.scalar_one_or_none()
 
         if profile_table is None:
             raise ProfileNotFoundError()
-
-        profile_table.phone = profile.phone
-        profile_table.first_name = profile.first_name
-        profile_table.middle_name = profile.middle_name
-        profile_table.last_name = profile.last_name
-        profile_table.updated_at = profile.updated_at
-
-        try:
-            await self.session.flush()
-        except IntegrityError as exc:
-            constraint_name = _get_constraint_name(exc)
-            if constraint_name == "uq_profiles_phone":
-                raise PhoneAlreadyExistsError() from exc
-
-            raise
-
-        await self.session.refresh(profile_table)
 
         return _to_entity(table=profile_table)
 

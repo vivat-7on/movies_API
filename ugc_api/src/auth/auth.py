@@ -23,7 +23,7 @@ class Auth:
 
         payload = jwt.decode(
             token,
-            key=self.settings.JWT_SECRET_KEY,
+            key=self.settings.jwt_public_key_path,
             algorithms=[self.settings.JWT_ALGORITHM],
         )
 

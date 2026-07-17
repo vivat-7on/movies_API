@@ -447,7 +447,8 @@ Redis:
 
 ## Безопасность
 
-- JWT access/refresh токены
+- JWT access/refresh токены (RS256)
+- Разделение приватного и публичного RSA-ключей
 - Хеширование refresh токенов в БД (SHA-256)
 - Хеширование паролей через bcrypt
 - Logout всех устройств через token_version
@@ -457,6 +458,15 @@ Redis:
 - Защита от повторного использования OAuth state
 
 ---
+
+## JWT
+
+Проект использует асимметричную подпись JWT (RS256).
+
+- Auth Service подписывает access и refresh токены приватным RSA-ключом.
+- Остальные сервисы (Movies API, Profile API, UGC API, UGC Content API)
+выполняют только проверку подписи с использованием публичного ключа.
+- Приватный ключ присутствует только в Auth Service и не распространяется между сервисами.
 
 ## CI
 
@@ -479,11 +489,30 @@ Pipeline автоматически выполняет:
 **Infrastructure:** Docker Compose, Nginx, Redis  
 **Observability:** OpenTelemetry, Jaeger  
 **Testing and quality:** pytest, mypy, Ruff, flake8  
-**Security:** JWT, OAuth2, bcrypt
+Security: JWT (RS256), OAuth2, bcrypt
 
 ---
 
 ## Запуск
+
+Также необходимо создать RSA-пару ключей для подписи JWT и разместить её в каталоге:
+
+```text
+secrets/jwt/
+├── private.pem
+└── public.pem
+```
+
+Пример генерации:
+
+```bash
+openssl genpkey -algorithm RSA -out secrets/jwt/private.pem -pkeyopt rsa_keygen_bits:2048
+
+openssl rsa \
+  -pubout \
+  -in secrets/jwt/private.pem \
+  -out secrets/jwt/public.pem
+```
 
 ```bash
 docker compose up --build

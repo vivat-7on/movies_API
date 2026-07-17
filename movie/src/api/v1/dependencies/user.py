@@ -14,7 +14,7 @@ def get_current_user(
 
     return decode_token(
         token=token,
-        secret=config.JWT_SECRET_KEY,
+        secret=config.JWT_PUBLIC_KEY_PATH,
         algorithm=config.JWT_ALGORITHM,
     )
 

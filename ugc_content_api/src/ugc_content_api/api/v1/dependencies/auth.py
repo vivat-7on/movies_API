@@ -17,7 +17,7 @@ def verify_jwt_token(
     try:
         payload = jwt.decode(
             token,
-            auth_settings.JWT_SECRET_KEY,
+            auth_settings.jwt_public_key,
             algorithms=[auth_settings.JWT_ALGORITHM],
         )
         return payload

@@ -210,3 +210,4 @@ __marimo__/
 *.DS_Store
 */flake8-report/*
 /admin/.vevn/
+secrets/jwt/*.pem

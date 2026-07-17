@@ -7,11 +7,11 @@ BASE_DIR = Path(__file__).resolve().parents[3]
 
 
 class PostgresSettings(BaseSettings):
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_USER: str = "user"
-    POSTGRES_DB: str = "db"
-    POSTGRES_HOST: str = "localhost"
-    POSTGRES_PORT: int = 5432
+    POSTGRES_PASSWORD: str
+    POSTGRES_USER: str
+    POSTGRES_DB: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: int
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
@@ -35,4 +35,4 @@ class PostgresSettings(BaseSettings):
 
 @lru_cache
 def get_postgres_settings() -> PostgresSettings:
-    return PostgresSettings()
+    return PostgresSettings()  # type: ignore[call-arg]

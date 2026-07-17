@@ -1,5 +1,6 @@
 import datetime
 import uuid
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import AsyncClient
@@ -367,3 +368,87 @@ async def test_delete_profile_without_jwt(
         "detail": "Not authenticated",
     }
     profile_service_mock.delete_profile.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_create_profile_with_real_jwt(
+    client_with_real_jwt: AsyncClient,
+    profile_service_mock: AsyncMock,
+    user_id: uuid.UUID,
+) -> None:
+    now = datetime.datetime.now(datetime.UTC)
+
+    profile = Profile(
+        id=uuid.uuid4(),
+        user_id=user_id,
+        phone="+79998887766",
+        first_name="John",
+        middle_name="Test",
+        last_name="Doe",
+        created_at=now,
+        updated_at=now,
+    )
+    profile_service_mock.create_profile.return_value = profile
+
+    response = await client_with_real_jwt.post(
+        "/api/v1/profiles",
+        json={
+            "phone": "8 999-888-77-66",
+            "first_name": "Valerii",
+            "last_name": "Semenov",
+        },
+    )
+
+    assert response.status_code == 201
+
+    profile_service_mock.create_profile.assert_awaited_once()
+
+    call = profile_service_mock.create_profile.await_args
+
+    assert call is not None
+    assert call.kwargs["user_id"] == user_id
+
+
+@pytest.mark.asyncio
+async def test_create_profile_with_invalid_jwt(
+    client_with_invalid_jwt: AsyncClient,
+    profile_service_mock: AsyncMock,
+    user_id: uuid.UUID,
+) -> None:
+    response = await client_with_invalid_jwt.post(
+        "/api/v1/profiles",
+        json={
+            "phone": "8 999-888-77-66",
+            "first_name": "Valerii",
+            "last_name": "Semenov",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+    }
+    profile_service_mock.create_profile.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_create_profile_with_token_signed_by_unknown_key(
+    client_with_invalid_jwt: AsyncClient,
+    profile_service_mock: AsyncMock,
+) -> None:
+    response = await client_with_invalid_jwt.post(
+        "/api/v1/profiles",
+        json={
+            "phone": "8 999 777 66 55",
+            "first_name": "John",
+            "middle_name": None,
+            "last_name": "Doe",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+    }
+
+    profile_service_mock.create_profile.assert_not_awaited()

@@ -17,7 +17,7 @@ def get_auth_headers() -> dict[str, str]:
     return {AUTH_HEADERS_NAME: AUTH_SCHEME}
 
 
-def raise_unautorized(detail: str) -> NoReturn:
+def raise_unauthorized(detail: str) -> NoReturn:
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail=detail,
@@ -32,7 +32,7 @@ def verify_jwt_token(
     try:
         return jwt.decode(
             token,
-            auth_settings.JWT_SECRET_KEY,
+            auth_settings.jwt_public_key_path,
             algorithms=[auth_settings.JWT_ALGORITHM],
         )
     except JWTError:
@@ -43,12 +43,12 @@ def parse_user_id(payload: dict[str, Any]) -> uuid.UUID:
     subject = payload.get("sub")
 
     if not isinstance(subject, str):
-        raise_unautorized(detail="Invalid token subject")
+        raise_unauthorized(detail="Invalid token subject")
 
     try:
         return uuid.UUID(subject)
     except ValueError:
-        raise_unautorized("Invalid token subject")
+        raise_unauthorized("Invalid token subject")
 
 
 async def get_user_id(
@@ -56,14 +56,14 @@ async def get_user_id(
     auth_settings: AuthSettings = Depends(get_auth_settings),
 ) -> uuid.UUID:
     if credentials is None:
-        raise_unautorized(detail="Not authenticated")
+        raise_unauthorized(detail="Not authenticated")
 
-        payload: dict[str, Any] | None = verify_jwt_token(
-            token=credentials.credentals,
-            auth_settings=auth_settings,
-        )
+    payload: dict[str, Any] | None = verify_jwt_token(
+        token=credentials.credentials,
+        auth_settings=auth_settings,
+    )
 
     if payload is None:
-        raise_unautorized(detail="Invalid or expired token")
+        raise_unauthorized(detail="Invalid or expired token")
 
     return parse_user_id(payload)

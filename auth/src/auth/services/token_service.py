@@ -21,7 +21,7 @@ class TokenService:
     ) -> str:
         return jwt.encode(
             claims=claim.model_dump(),
-            key=self.auth_settings.JWT_SECRET_KEY,
+            key=self.auth_settings.jwt_private_key_path,
             algorithm=self.auth_settings.JWT_ALGORITHM,
         )
 
@@ -53,7 +53,7 @@ class TokenService:
         try:
             payload = jwt.decode(
                 access_token,
-                key=self.auth_settings.JWT_SECRET_KEY,
+                key=self.auth_settings.jwt_public_key_path,
                 algorithms=[self.auth_settings.JWT_ALGORITHM],
                 options={
                     "verify_aud": False,

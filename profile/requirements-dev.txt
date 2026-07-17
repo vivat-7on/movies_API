@@ -1,0 +1,13 @@
+-r requirements.txt
+
+httpx==0.28.1
+types-python-jose==3.5.0.20260408
+
+mypy==2.3.0
+ruff==0.15.21
+
+flake8-html==0.4.3
+wemake-python-styleguide==1.6.2
+
+pytest==9.1.1
+pytest-asyncio==1.4.0
