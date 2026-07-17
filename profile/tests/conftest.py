@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool
 
-TEST_BASE_URL = "http://test"
+TEST_BASE_URL: str = "http://test"
 
 
 @pytest.fixture
@@ -65,7 +65,7 @@ async def client_without_jwt(
         transport = ASGITransport(app=app)
         async with AsyncClient(
             transport=transport,
-            base_url="http://test",
+            base_url=TEST_BASE_URL,
         ) as async_client:
             yield async_client
     finally:
@@ -166,7 +166,7 @@ async def client_with_real_jwt(
     try:
         async with AsyncClient(
             transport=ASGITransport(app=app),
-            base_url="http://test",
+            base_url=TEST_BASE_URL,
             headers={
                 "Authorization": f"Bearer {access_token}",
             },
@@ -189,7 +189,7 @@ async def client_with_invalid_jwt(
     try:
         async with AsyncClient(
             transport=transport,
-            base_url="http://test",
+            base_url=TEST_BASE_URL,
             headers={"Authorization": "Bearer invalid"},
         ) as async_client:
             yield async_client
