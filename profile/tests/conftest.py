@@ -1,14 +1,15 @@
 import os
 import uuid
-from typing import AsyncGenerator
+from pathlib import Path
+from typing import AsyncGenerator, AsyncIterator
 from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from jose import jwt
-from profile_service.api.v1.dependencies.auth import get_user_id
+from profile_service.api.v1.dependencies.auth import get_auth_settings, get_user_id
 from profile_service.api.v1.dependencies.services import create_profile_service
-from profile_service.core.config import AuthSettings, get_auth_settings
+from profile_service.core.config import AuthSettings
 from profile_service.db.tables import BaseTable
 from profile_service.main import app
 from sqlalchemy import text
@@ -29,14 +30,6 @@ def user_id() -> uuid.UUID:
 @pytest.fixture
 def profile_service_mock() -> AsyncMock:
     return AsyncMock()
-
-
-@pytest.fixture
-def auth_settings() -> AuthSettings:
-    return AuthSettings(
-        JWT_SECRET_KEY="test-secret-key",
-        JWT_ALGORITHM="HS256",
-    )
 
 
 @pytest.fixture
@@ -127,35 +120,56 @@ async def integration_session(
 
 
 @pytest.fixture
+def jwt_private_key_path() -> Path:
+    return Path(__file__).parent / "keys" / "private.pem"
+
+
+@pytest.fixture
+def jwt_public_key_path() -> Path:
+    return Path(__file__).parent / "keys" / "public.pem"
+
+
+@pytest.fixture
+def auth_settings(jwt_public_key_path: Path) -> AuthSettings:
+    keys_dir = Path(__file__).parent / "keys"
+
+    return AuthSettings(
+        JWT_PUBLIC_KEY_PATH=keys_dir / "public.pem",
+        JWT_ALGORITHM="RS256",
+    )
+
+
+@pytest.fixture
 def access_token(
     user_id: uuid.UUID,
-    auth_settings: AuthSettings,
+    jwt_private_key_path: Path,
 ) -> str:
+    private_key = jwt_private_key_path.read_text(encoding="utf-8")
+
     return jwt.encode(
         {"sub": str(user_id)},
-        auth_settings.JWT_SECRET_KEY,
-        algorithm=auth_settings.JWT_ALGORITHM,
+        private_key,
+        algorithm="RS256",
     )
 
 
 @pytest.fixture
 async def client_with_real_jwt(
-    profile_service_mock: AsyncMock,
-    auth_settings: AuthSettings,
     access_token: str,
-) -> AsyncGenerator[AsyncClient, None]:
+    auth_settings: AuthSettings,
+    profile_service_mock: AsyncMock,
+) -> AsyncIterator[AsyncClient]:
     app.dependency_overrides[get_auth_settings] = lambda: auth_settings
     app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
-
-    transport = ASGITransport(app=app)
-
     try:
         async with AsyncClient(
-            transport=transport,
+            transport=ASGITransport(app=app),
             base_url="http://test",
-            headers={"Authorization": f"Bearer {access_token}"},
-        ) as async_client:
-            yield async_client
+            headers={
+                "Authorization": f"Bearer {access_token}",
+            },
+        ) as client:
+            yield client
     finally:
         app.dependency_overrides.clear()
 

@@ -429,3 +429,26 @@ async def test_create_profile_with_invalid_jwt(
         "detail": "Invalid or expired token",
     }
     profile_service_mock.create_profile.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_create_profile_with_token_signed_by_unknown_key(
+    client_with_invalid_jwt: AsyncClient,
+    profile_service_mock: AsyncMock,
+) -> None:
+    response = await client_with_invalid_jwt.post(
+        "/api/v1/profiles",
+        json={
+            "phone": "8 999 777 66 55",
+            "first_name": "John",
+            "middle_name": None,
+            "last_name": "Doe",
+        },
+    )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "detail": "Invalid or expired token",
+    }
+
+    profile_service_mock.create_profile.assert_not_awaited()

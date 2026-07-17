@@ -40,6 +40,13 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    volumes:
+      - ../secrets/jwt/private.pem:/run/secrets/jwt_private_key:ro
+      - ../secrets/jwt/public.pem:/run/secrets/jwt_public_key:ro
+    environment:
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt_private_key
+      JWT_PUBLIC_KEY_PATH: /run/secrets/jwt_public_key
+      JWT_ALGORITHM: RS256
     depends_on:
       db:
         condition: service_healthy

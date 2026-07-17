@@ -13,6 +13,7 @@ from auth.core.config import (
     DBSettings,
     RedisSettings,
     YandexOAuthSettings,
+    get_auth_settings,
 )
 from auth.db.session import get_session
 from auth.dtos.token import UserDTO
@@ -38,11 +39,6 @@ from auth.services.yandex_provider import YandexOAuthProvider
 @lru_cache
 def get_db_settings() -> DBSettings:
     return DBSettings()
-
-
-@lru_cache
-def get_auth_settings() -> AuthSettings:
-    return AuthSettings()
 
 
 @lru_cache

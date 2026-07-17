@@ -32,7 +32,7 @@ def verify_jwt_token(
     try:
         return jwt.decode(
             token,
-            auth_settings.JWT_SECRET_KEY,
+            auth_settings.jwt_public_key_path,
             algorithms=[auth_settings.JWT_ALGORITHM],
         )
     except JWTError:
