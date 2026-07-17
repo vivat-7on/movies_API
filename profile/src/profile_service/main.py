@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from profile_service.api.v1 import profiles
 from profile_service.core.config import get_app_settings
 from profile_service.core.exception_handlers import setup_exception_handlers
-from profile_service.db.runtime import async_engine
+from profile_service.db.runtime import get_async_engine
 
 app_settings = get_app_settings()
 
@@ -14,7 +14,7 @@ app_settings = get_app_settings()
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
-    await async_engine.dispose()
+    await get_async_engine().dispose()
 
 
 app = FastAPI(

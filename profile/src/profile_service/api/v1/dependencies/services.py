@@ -4,13 +4,17 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from profile_service.db.connection import get_postgres_session
-from profile_service.db.runtime import session_factory
+from profile_service.db.runtime import get_session_factory
 from profile_service.repositories.profiles import ProfileRepo
 from profile_service.services.profiles import ProfileService
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async for session in get_postgres_session(session_factory=session_factory):
+    session_factory = get_session_factory()
+
+    async for session in get_postgres_session(
+        session_factory=session_factory,
+    ):
         yield session
 
 
