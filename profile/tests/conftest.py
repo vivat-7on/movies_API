@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from jose import jwt
 from profile_service.api.v1.dependencies.auth import get_user_id
 from profile_service.api.v1.dependencies.services import create_profile_service
 from profile_service.core.config import AuthSettings, get_auth_settings
@@ -123,3 +124,58 @@ async def integration_session(
         if transaction.is_active:
             await transaction.rollback()
         await connection.close()
+
+
+@pytest.fixture
+def access_token(
+    user_id: uuid.UUID,
+    auth_settings: AuthSettings,
+) -> str:
+    return jwt.encode(
+        {"sub": str(user_id)},
+        auth_settings.JWT_SECRET_KEY,
+        algorithm=auth_settings.JWT_ALGORITHM,
+    )
+
+
+@pytest.fixture
+async def client_with_real_jwt(
+    profile_service_mock: AsyncMock,
+    auth_settings: AuthSettings,
+    access_token: str,
+) -> AsyncGenerator[AsyncClient, None]:
+    app.dependency_overrides[get_auth_settings] = lambda: auth_settings
+    app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
+
+    transport = ASGITransport(app=app)
+
+    try:
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+            headers={"Authorization": f"Bearer {access_token}"},
+        ) as async_client:
+            yield async_client
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def client_with_invalid_jwt(
+    profile_service_mock: AsyncMock,
+    auth_settings: AuthSettings,
+) -> AsyncGenerator[AsyncClient, None]:
+    app.dependency_overrides[get_auth_settings] = lambda: auth_settings
+    app.dependency_overrides[create_profile_service] = lambda: profile_service_mock
+
+    transport = ASGITransport(app=app)
+
+    try:
+        async with AsyncClient(
+            transport=transport,
+            base_url="http://test",
+            headers={"Authorization": "Bearer invalid"},
+        ) as async_client:
+            yield async_client
+    finally:
+        app.dependency_overrides.clear()
